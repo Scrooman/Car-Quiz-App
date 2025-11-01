@@ -145,9 +145,9 @@ h1 {
 
 #check-answer-btn, #next-question-btn {
     padding: 10px 20px;
-    border: none;
+    border: 2px solid #5d5247;
     background-color: #fff8f0;
-    color: white;
+    color: #5d5247;
     cursor: pointer;
     border-radius: 5px;
     font-size: 16px;
