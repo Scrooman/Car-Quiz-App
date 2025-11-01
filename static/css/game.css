@@ -1,0 +1,238 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+    margin: 0;
+    padding: 20px;
+}
+
+h1 {
+    text-align: center;
+    color: #333;
+}
+
+.container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.button {
+    display: inline-block;
+    margin: 10px;
+    padding: 10px 20px;
+    font-size: 16px;
+    color: #fff;
+    background-color: #007bff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.button:hover {
+    background-color: #0056b3;
+}
+
+.start-button {
+    background-color: #28a745;
+}
+
+.start-button:hover {
+    background-color: #218838;
+}
+
+/* ...existing code... */
+
+.category-btn {
+    margin: 5px;
+    padding: 10px 15px;
+    border: 2px solid #007bff;
+    background-color: white;
+    color: #007bff;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: all 0.3s ease;
+}
+
+.category-btn:hover {
+    background-color: #007bff;
+    color: white;
+}
+
+.category-btn.selected {
+    background-color: #0056b3;
+    color: white;
+    border-color: #0056b3;
+}
+
+#quiz-categories-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+/* ...existing code... */
+
+.question-container {
+    margin-top: 20px;
+    padding: 20px;
+    border: 2px solid #007bff;
+    border-radius: 10px;
+    background-color: #f8f9fa;
+}
+
+.question-container h3 {
+    margin-bottom: 20px;
+    color: #333;
+}
+
+.answers-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.answer-btn {
+    padding: 15px;
+    border: 2px solid #007bff;
+    background-color: white;
+    color: #007bff;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: all 0.3s ease;
+    text-align: left;
+}
+
+.answer-btn:hover:not(:disabled) {
+    background-color: #007bff;
+    color: white;
+}
+
+.answer-btn.selected {
+    background-color: #0056b3;
+    color: white;
+    border-color: #0056b3;
+}
+
+.answer-btn.correct {
+    background-color: #28a745;
+    color: white;
+    border-color: #28a745;
+}
+
+.answer-btn.incorrect {
+    background-color: #dc3545;
+    color: white;
+    border-color: #dc3545;
+}
+
+.answer-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.8;
+}
+
+#check-answer-btn, #next-question-btn {
+    padding: 10px 20px;
+    border: none;
+    background-color: #007bff;
+    color: white;
+    cursor: pointer;
+    border-radius: 5px;
+    font-size: 16px;
+    margin-top: 10px;
+}
+
+#check-answer-btn:hover, #next-question-btn:hover {
+    background-color: #0056b3;
+}
+
+.result-container {
+    margin-top: 20px;
+}
+
+.correct-message {
+    color: #28a745;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.incorrect-message {
+    color: #dc3545;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.category-btn {
+    margin: 5px;
+    padding: 10px 15px;
+    border: 2px solid #007bff;
+    background-color: white;
+    color: #007bff;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: all 0.3s ease;
+}
+
+.category-btn:hover {
+    background-color: #007bff;
+    color: white;
+}
+
+.category-btn.selected {
+    background-color: #0056b3;
+    color: white;
+    border-color: #0056b3;
+}
+
+#quiz-categories-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+/* ...existing code... */
+
+#quiz-settings-container {
+    margin: 20px 0;
+    padding: 15px;
+    border: 2px solid #6c757d;
+    border-radius: 8px;
+    background-color: #f8f9fa;
+}
+
+#quiz-settings-container h2 {
+    margin-bottom: 15px;
+    color: #333;
+}
+
+.settings-group {
+    margin-bottom: 15px;
+}
+
+.settings-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: #495057;
+}
+
+.settings-group input,
+.settings-group select {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.settings-group input:focus,
+.settings-group select:focus {
+    outline: none;
+    border-color: #007bff;
+}

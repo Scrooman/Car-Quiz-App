@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/game.css') }}">
+    <title>Game Page</title>
+</head>
+<body>
+    <div class="container">
+        <h1>Game Page</h1>
+        <div id="selected-quiz-api"></div>
+        <div id="selected-ai-api"></div>
+        <div id="quiz-categories-container">
+            <h2>Wybierz kategorię pytań:</h2>
+            <div id="quiz-categories-buttons"></div>
+        </div>
+        
+        <div id="quiz-settings-container">
+            <h2>Ustawienia quizu:</h2>
+            <div class="settings-group">
+                <label for="difficulty">Poziom trudności:</label>
+                <select id="difficulty">
+                    <option value="">Dowolny</option>
+                    <option value="easy">Łatwy</option>
+                    <option value="medium">Średni</option>
+                    <option value="hard">Trudny</option>
+                </select>
+            </div>
+            <div class="settings-group">
+                <label for="type">Typ pytań:</label>
+                <select id="type">
+                    <option value="">Dowolny</option>
+                    <option value="multiple">Wybór wielokrotny</option>
+                    <option value="boolean">Prawda/Fałsz</option>
+                </select>
+            </div>
+        </div>
+        
+        <button id="get-question-button">Get Question</button>
+    </div>
+    <script src="{{ url_for('static', filename='js/game.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+{
+  "trivia_categories": [
+    {
+      "id": 9,
+      "name": "General Knowledge"
+    },
+    {
+      "id": 10,
+      "name": "Entertainment: Books"
+    }
+  ]
+}

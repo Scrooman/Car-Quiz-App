@@ -1,0 +1,16 @@
+{
+    "results": [
+        {
+            "type": "multiple",
+            "difficulty": "easy",
+            "category": "Science &amp; Nature",
+            "question": "What is the standard SI unit for mass?",
+            "correct_answer": "Kilogram",
+            "incorrect_answers": [
+            "Tonne",
+            "Pound",
+            "Gram"
+            ]
+        }
+    ]
+}

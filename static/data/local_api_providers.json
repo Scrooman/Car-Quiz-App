@@ -1,0 +1,12 @@
+{
+    "quiz_api": [
+        {
+            "name": "Trivia API"
+        }
+    ],
+    "ai_api": [
+        {
+            "name": "Gemini"
+        }
+    ]
+}
