@@ -24,9 +24,9 @@ h1 {
     margin: 10px;
     padding: 10px 20px;
     font-size: 16px;
-    color: #fff;
-    background-color: #007bff;
-    border: none;
+    color: #5d5247;
+    background-color: #fff8f0;
+    border: 2px solid #5d5247;
     border-radius: 5px;
     cursor: pointer;
     transition: background-color 0.3s;
@@ -75,7 +75,7 @@ h1 {
     margin-top: 10px;
     flex-direction: column;
     overflow-x: auto;
-    max-height: 300px;
+    max-height: 10em;
     flex-wrap: nowrap;
     border: 2px solid #6c757d;
     border-radius: 8px;
@@ -173,13 +173,6 @@ h1 {
     color: #dc3545;
     font-size: 18px;
     font-weight: bold;
-}
-
-#quiz-categories-buttons {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    margin-top: 10px;
 }
 
 /* ...existing code... */
