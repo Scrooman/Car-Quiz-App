@@ -79,6 +79,8 @@ def get_questions():
 def generate_description():
     # Pobierz parametry z żądania
     category = request.args.get('category', '')
+    temperature = request.args.get('temperature', '0.5')
+    print(f"Temperature received: {temperature}")
     question = request.args.get('question', '')
     correct_answer = request.args.get('correct_answer', '')
     incorrect_answers = request.args.get('incorrect_answers', '')
@@ -106,26 +108,35 @@ def generate_description():
         "systemInstruction": {
             "parts": [
                 {
-                    "text": "Jesteś ekspertem ds. edukacji i tworzenia treści kontekstowych. Twoim zadaniem jest wygenerowanie 5-zdaniowego wprowadzenia do zadanego tematu pytania oraz 5-zdaniowego podsumowania rozwijającego kontekst prawidłowej odpowiedzi. Odpowiedzi muszą być precyzyjne, edukacyjne i generowane **tylko w języku polskim**."
+                    "text": "Jesteś ekspertem ds. edukacji i tworzenia treści kontekstowych. Twoim zadaniem jest wygenerowanie 5-zdaniowego wprowadzenia do zadanego tematu pytania "
+                    "oraz 5-zdaniowego podsumowania rozwijającego kontekst prawidłowej odpowiedzi. Odpowiedzi muszą być precyzyjne, edukacyjne i generowane **tylko w języku polskim**. "
+                    "Dodatkowo, wygeneruj listę najciekawszych terminów, które znajdują się w treści wprowadzenia i podsumowania, dla któych użytkownik może chcieć pogłębić wiedzę."
                 }
             ]
         },
         "generationConfig": {
-            "temperature": 0.5,
+            "temperature": temperature,
             "responseMimeType": "application/json",
             "responseSchema": {
                 "type": "object",
                 "properties": {
                     "wprowadzenie": {
                         "type": "string",
-                        "description": "Pięciozdaniowe wprowadzenie do tematu pytania, nakreślające kontekst i znaczenie zagadnienia."
+                        "description": "Pięciozdaniowe wprowadzenie do tematu pytania, nakreślające kontekst i znaczenie zagadnienia,które wyjaśnia okoliczne fakty i ważne informacje dotyczące zadanego pytania, ale bez zdradzania prawidłowej odpowiedzi."
                     },
                     "podsumowanie": {
                         "type": "string",
                         "description": "Pięciozdaniowe rozszerzenie informacyjne na temat prawidłowej odpowiedzi, wyjaśniające jej znaczenie i kontekst."
+                    },
+                    "słowa_kluczowe": {
+                        "type": "array",
+                        "description": "Lista kluczowych terminów, nazw własnych, definicji lub dat z tekstu wprowadzenia i podsumowania, które mogą być interesujące i moga wymagać pogłębienia wiedzy. Wygenerowane wartości muszą mieć ten sam zapis jak w wprowadzeniu i podsumowaniu.",
+                        "items": {
+                            "type": "string"
+                        }
                     }
                 },
-                "required": ["wprowadzenie", "podsumowanie"]
+                "required": ["wprowadzenie", "podsumowanie", "słowa_kluczowe"]
             }
         }
     }
@@ -152,7 +163,8 @@ def generate_description():
             
             return jsonify({
                 'wprowadzenie': parsed_content.get('wprowadzenie', ''),
-                'podsumowanie': parsed_content.get('podsumowanie', '')
+                'podsumowanie': parsed_content.get('podsumowanie', ''),
+                'slowa_kluczowe': parsed_content.get('słowa_kluczowe', [])
             }), 200
         else:
             return jsonify({'error': 'No valid response from Gemini API'}), 500
@@ -163,6 +175,65 @@ def generate_description():
         return jsonify({'error': f'JSON parsing error: {str(e)}'}), 500
     except Exception as e:
         return jsonify({'error': f'Unexpected error: {str(e)}'}), 500
+
+
+@app.route('/api/get-keyword-definition', methods=['GET'])
+def get_keyword_definition():
+    try:
+        keyword = request.args.get('keyword', '')
+        temperature = float(request.args.get('temperature', 0.5))
+        question = request.args.get('question', '')
+        
+        if not keyword:
+            return jsonify({'error': 'Keyword parameter is required'}), 400
+
+        # Zmodyfikowany prompt z kontekstem pytania
+        if question:
+            user_prompt = f"Wyjaśnij w 3-4 zdaniach co oznacza termin: '{keyword}'. Odpowiedź powinna być zwięzła, merytoryczna i edukacyjna. Pamiętaj, że wyjaśnienie jest w kontekście pytania: '{question}', ale NIE MOŻESZ zdradzić odpowiedzi na to pytanie."
+        else:
+            user_prompt = f"Wyjaśnij w 3-4 zdaniach co oznacza termin: '{keyword}'. Odpowiedź powinna być zwięzła, merytoryczna i edukacyjna."
+
+        gemini_request = {
+            "contents": [
+                {
+                    "role": "user",
+                    "parts": [{"text": user_prompt}]
+                }
+            ],
+            "systemInstruction": {
+                "parts": [
+                    {
+                        "text": "Jesteś ekspertem edukacyjnym. Twoim zadaniem jest wyjaśnianie pojęć w sposób prosty i zrozumiały. "
+                               "Odpowiedzi generuj **tylko w języku polskim**. "
+                               "WAŻNE: Jeśli wyjaśnienie jest w kontekście pytania quizowego, NIE MOŻESZ w żaden sposób sugerować ani zdradzać prawidłowej odpowiedzi. "
+                               "Skup się na ogólnym wyjaśnieniu terminu bez wskazywania konkretnych odpowiedzi."
+                    }
+                ]
+            },
+            "generationConfig": {
+                "temperature": temperature,
+                "responseMimeType": "text/plain"
+            }
+        }
+
+        headers = {'Content-Type': 'application/json'}
+        url = f"{GEMINI_API_URL}?key={GEMINI_API_KEY}"
+        
+        response = requests.post(url, headers=headers, json=gemini_request, timeout=30)
+        response.raise_for_status()
+        gemini_response = response.json()
+
+        if 'candidates' in gemini_response and len(gemini_response['candidates']) > 0:
+            definition = gemini_response['candidates'][0]['content']['parts'][0]['text']
+            
+            return jsonify({'definition': definition}), 200
+        else:
+            return jsonify({'error': 'No valid response from Gemini API'}), 500
+
+    except Exception as e:
+        app.logger.error(f'Error getting keyword definition: {str(e)}', exc_info=True)
+        return jsonify({'error': f'Unexpected error: {str(e)}'}), 500
+
 
 
 if __name__ == '__main__':

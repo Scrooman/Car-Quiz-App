@@ -4,6 +4,7 @@ let selectedCategory = null;
 let currentQuestionIndex = 0;
 let introductionData = '';
 let conclusionData = '';
+let keywordsData = [];
 
 function getCookie(name) {
     const value = `; ${document.cookie}`;
@@ -12,7 +13,14 @@ function getCookie(name) {
     return null;
 }
 
+function addDelayedClick(element, callback, delay = 200) {
+    element.addEventListener('click', (e) => {
+        setTimeout(() => callback(e), delay);
+    });
+}
+
 document.addEventListener('DOMContentLoaded', () => {
+
     // Display the selected values on the game page
     const quizAPIContainer = document.getElementById('selected-quiz-api');
     const aiAPIContainer = document.getElementById('selected-ai-api');
@@ -47,6 +55,17 @@ document.addEventListener('DOMContentLoaded', () => {
             .catch(error => console.error('Error loading API quiz categories:', error));
     } else {
         console.log('No quiz categories cookie found.');
+    }
+
+    // Temperature slider handler
+    const temperatureSlider = document.getElementById('temperature');
+    const temperatureValue = document.getElementById('temperature-value');
+    
+    if (temperatureSlider && temperatureValue) {
+        temperatureSlider.addEventListener('input', (e) => {
+            temperatureValue.textContent = e.target.value;
+            console.log('Selected AI API Temperature:', e.target.value);
+        });
     }
 
     function loadQuestionsFromLocal() {
@@ -98,8 +117,38 @@ document.addEventListener('DOMContentLoaded', () => {
         return new Promise((resolve, reject) => {
             if (questionDescriptionCookie === "api_question_description") {
                 console.log('Loading question description from Gemini API...');
+
+                // Remove previous question if exists
+                const existingContainer = document.getElementById('introduction-question-container');
+                if (existingContainer) existingContainer.remove();
+
+                const questionContainer = document.getElementById('question-container');
+                // Create question introduction container
+                const introductionContainer = document.createElement('div');
+                introductionContainer.id = 'introduction-question-container';
+                introductionContainer.className = 'introduction-question-container';
+                questionContainer.appendChild(introductionContainer);
+
+                // Create container title
+                const containerTitle = document.createElement('div');
+                containerTitle.className = 'container-title';
+                containerTitle.textContent = `Introduction`;
+                introductionContainer.appendChild(containerTitle);
+
+                // Create question introduction inner container
+                const introductionInnerContainer = document.createElement('div');
+                introductionInnerContainer.className = 'introduction-question-inner-container';
+                introductionContainer.appendChild(introductionInnerContainer);
+
+                const introText = document.createElement('p');
+                introText.innerHTML = `<span class="spinner"></span>Generating introduction...`;
+                introductionInnerContainer.appendChild(introText);
+                const temperatureValue = document.getElementById('temperature').value;
+
+                
                 
                 const params = new URLSearchParams({
+                    temperature: temperatureValue,
                     category: question.category,
                     question: question.question,
                     correct_answer: question.correct_answer,
@@ -112,8 +161,15 @@ document.addEventListener('DOMContentLoaded', () => {
                         if (data.wprowadzenie && data.podsumowanie) {
                             introductionData = data.wprowadzenie;
                             conclusionData = data.podsumowanie;
+                            keywordsData = data.slowa_kluczowe || [];
                             console.log('Loaded API introduction data:', introductionData);
                             console.log('Loaded API conclusion data:', conclusionData);
+                            console.log('Loaded API keywords data:', keywordsData);
+                            // Odblokuj przycisk sprawdzania odpowiedzi
+                            const checkBtn = document.getElementById('check-answer-btn');
+                            checkBtn.disabled = false;
+                            checkBtn.textContent = 'Check';
+
                             resolve();
                         } else {
                             reject(new Error('Invalid response from description API'));
@@ -131,6 +187,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function loadQuestionsFromAPI() {
         return new Promise((resolve, reject) => {
+
+            // pokaż loading state 
+            const getQuestionButton = document.getElementById('get-question-button');
+            if (getQuestionButton) {
+                getQuestionButton.innerHTML = `<span class="spinner"></span>`;
+                getQuestionButton.disabled = true;
+            }
+
+
             const difficulty = document.getElementById('difficulty').value;
             const type = document.getElementById('type').value;
             const category = selectedCategory ? selectedCategory.id : '';
@@ -148,6 +213,17 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (data.results && Array.isArray(data.results)) {
                         quizData = data.results;
                         console.log('Loaded quiz data from API:', quizData);
+                        displayQuestion(quizData[0], quizDataCookie);
+
+                        getQuestionButton.style.display = 'none';
+
+                        // Usuń przycisk "Get Question" po załadowaniu pytania
+                        const getNextQuestionButton = document.getElementById('next-question-btn');
+                        if (getNextQuestionButton) {
+                            getNextQuestionButton.remove();
+                        }
+
+
                         resolve();
                     } else {
                         reject(new Error('No results from API'));
@@ -156,7 +232,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 .catch(error => {
                     console.error('Error loading quiz data from API:', error);
                     reject(error);
+                    // Przywróć przycisk w przypadku błędu
+                    if (getQuestionButton) {
+                        getQuestionButton.disabled = false;
+                        getQuestionButton.textContent = 'Error';
+
+                        setTimeout(() => {
+                            getQuestionButton.textContent = 'Show Items';
+                        }, 2000);
+                    }
                 });
+
+
         });
     }
 
@@ -191,6 +278,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 await loadQuestionsFromAPI();
             }
 
+
+
             if (!Array.isArray(quizData) || quizData.length === 0) {
                 alert('Nie udało się załadować pytań. Spróbuj ponownie.');
                 return;
@@ -206,19 +295,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 await loadQuestionDescriptionFromAPI(currentQuestion);
             }
 
-            displayQuestion(currentQuestion, introductionData, quizDataCookie);
+            displayQuestionDescription(introductionData);
         } catch (error) {
             alert('Błąd podczas ładowania pytań. Spróbuj ponownie.');
             console.error(error);
         }
     }
 
-    getQuestionButton.addEventListener('click', async () => {
+    addDelayedClick(getQuestionButton, async () => {
         if (!selectedCategory) {
             alert('Proszę wybrać kategorię pytań!');
             return;
         }
-
         await loadAndDisplayNextQuestion();
         getQuestionButton.style.display = 'none';
     });
@@ -227,7 +315,7 @@ document.addEventListener('DOMContentLoaded', () => {
     window.loadAndDisplayNextQuestion = loadAndDisplayNextQuestion;
 });
 
-function displayQuestion(question, introductionData, quizDataCookie) {
+function displayQuestion(question, quizDataCookie) {
     // Remove previous question if exists
     const existingContainer = document.getElementById('question-container');
     if (existingContainer) existingContainer.remove();
@@ -237,23 +325,21 @@ function displayQuestion(question, introductionData, quizDataCookie) {
     container.id = 'question-container';
     container.className = 'question-container';
 
-    // Create question introduction container
-    if (introductionData) {
-        const introductionContainer = document.createElement('div');
-        introductionContainer.id = 'introduction-question-container';
-        introductionContainer.className = 'introduction-container';
-        
-        const introText = document.createElement('p');
-        introText.innerHTML = decodeHTML(introductionData);
-        introductionContainer.appendChild(introText);
-        
-        container.appendChild(introductionContainer);
-    }
+    // create container title
+    const containerTitle = document.createElement('div');
+    containerTitle.className = 'container-title';
+    containerTitle.textContent = `Question`;
+    container.appendChild(containerTitle);
+
+    // create question inner container
+    const questionInnerContainer = document.createElement('div');
+    questionInnerContainer.className = 'question-container-inner-container';
+    container.appendChild(questionInnerContainer);
 
     // Question text
     const questionText = document.createElement('h3');
     questionText.innerHTML = decodeHTML(question.question);
-    container.appendChild(questionText);
+    questionInnerContainer.appendChild(questionText);
 
     // Combine correct and incorrect answers
     const answers = [...question.incorrect_answers, question.correct_answer];
@@ -273,22 +359,151 @@ function displayQuestion(question, introductionData, quizDataCookie) {
         });
         answersContainer.appendChild(answerBtn);
     });
-    container.appendChild(answersContainer);
+    questionInnerContainer.appendChild(answersContainer);
 
     // Check button
     const checkBtn = document.createElement('button');
     checkBtn.id = 'check-answer-btn';
+    checkBtn.className = 'check-answer-btn';
     checkBtn.textContent = 'Sprawdź';
-    checkBtn.addEventListener('click', () => checkAnswer(question, quizDataCookie));
-    container.appendChild(checkBtn);
+    checkBtn.addEventListener('click', () => {
+        setTimeout(() => checkAnswer(question, quizDataCookie), 300);
+    });
+
+    // Zablokuj przycisk tylko jeśli ładujesz opis z API
+    const questionDescriptionCookie = getCookie('question_description');
+    if (questionDescriptionCookie === "api_question_description") {
+        checkBtn.disabled = true;
+        console.log('Check button disabled:', checkBtn.disabled);
+
+        checkBtn.innerHTML = `<span class="spinner"></span>`;
+    }
+
+    questionInnerContainer.appendChild(checkBtn);
+
 
     // Result message container
     const resultContainer = document.createElement('div');
     resultContainer.id = 'result-container';
     resultContainer.className = 'result-container';
-    container.appendChild(resultContainer);
+    questionInnerContainer.appendChild(resultContainer);
 
     document.querySelector('.container').appendChild(container);
+}
+
+function displayQuestionDescription(introductionData) {
+    // Remove previous question if exists
+
+
+    const questionContainer = document.getElementById('question-container');
+    const introductionContainer = document.getElementById('introduction-question-container');
+    // Create question introduction container
+    if (introductionData) {
+        const introductionInnerContainer = document.getElementsByClassName('introduction-question-inner-container')[0];
+        
+        // remove loading state
+        introductionInnerContainer.innerHTML = '';
+
+        const introText = document.createElement('p');
+        introText.style.margin = '0px';
+        // Podkreśl słowa kluczowe
+        introText.innerHTML = highlightKeywords(decodeHTML(introductionData), keywordsData);
+        introductionInnerContainer.appendChild(introText);
+
+        // Dodaj event listenery do podkreślonych słów
+        const keywordElements = introductionInnerContainer.querySelectorAll('.keyword-highlight');
+        keywordElements.forEach(element => {
+            element.addEventListener('click', async (e) => {
+                const keyword = e.target.dataset.keyword;
+                await showKeywordDefinition(keyword);
+            });
+        });
+    }
+}
+
+function highlightKeywords(text, keywords) {
+    if (!keywords || keywords.length === 0) {
+        return text;
+    }
+
+    let highlightedText = text;
+    
+    // Sortuj słowa kluczowe od najdłuższych, aby uniknąć konfliktów
+    const sortedKeywords = [...keywords].sort((a, b) => b.length - a.length);
+    
+    sortedKeywords.forEach((keyword, index) => {
+        // Escape special regex characters
+        const escapedKeyword = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        // Znajdź wszystkie wystąpienia słowa (case-insensitive, całe słowo)
+        const regex = new RegExp(`\\b(${escapedKeyword})\\b`, 'gi');
+        
+        highlightedText = highlightedText.replace(regex, (match) => {
+            return `<span class="keyword-highlight" data-keyword="${keyword}" data-index="${index}">${match}</span>`;
+        });
+    });
+    
+    return highlightedText;
+}
+
+async function showKeywordDefinition(keyword) {
+    console.log('Clicked keyword:', keyword);
+    
+    // Remove previous keyword definition if exists
+    const existingDefinition = document.getElementById('keyword-definition-container');
+    if (existingDefinition) {
+        existingDefinition.remove();
+    }
+
+    const questionContainer = document.getElementById('question-container');
+
+    // Create inner container for padding
+    const keywordDefinitionContainer = document.createElement('div');
+    keywordDefinitionContainer.id = 'keyword-definition-container';
+    keywordDefinitionContainer.className = 'keyword-definition-container';
+    questionContainer.appendChild(keywordDefinitionContainer);
+
+    // Create container title
+    const containerTitle = document.createElement('div');
+    containerTitle.className = 'container-title';
+    containerTitle.textContent = `More about`;
+    keywordDefinitionContainer.appendChild(containerTitle);
+
+    // Create keyword definition inner container
+    const keywordDefinitionInnerContainer = document.createElement('div');
+    keywordDefinitionContainer.id = 'keyword-definition-inner-container';
+    keywordDefinitionInnerContainer.className = 'keyword-definition-inner-container';
+
+    // Show loading state
+    keywordDefinitionInnerContainer.innerHTML = `<span class="spinner"></span> Generating definitions...`;
+    keywordDefinitionContainer.appendChild(keywordDefinitionInnerContainer);
+
+    try {
+        // Pobierz treść pytania z kontenera
+        const questionText = document.querySelector('.question-container h3');
+        const currentQuestion = questionText ? questionText.textContent : '';
+        
+        // Wywołaj API do pobrania definicji słowa kluczowego
+        const temperatureValue = document.getElementById('temperature').value;
+        const params = new URLSearchParams({
+            keyword: keyword,
+            temperature: temperatureValue,
+            question: currentQuestion  // Dodaj pytanie do parametrów
+        });
+
+        const response = await fetch(`/api/get-keyword-definition?${params.toString()}`);
+        const data = await response.json();
+
+        if (data.definition) {
+            keywordDefinitionInnerContainer.innerHTML = `
+                ${data.definition}
+            `;
+        } else {
+            keywordDefinitionInnerContainer.innerHTML = '<p class="error-message">Nie udało się załadować definicji.</p>';
+        }
+    } catch (error) {
+        console.error('Error loading keyword definition:', error);
+        keywordDefinitionInnerContainer.innerHTML = '<p class="error-message">Błąd podczas ładowania definicji.</p>';
+    }
 }
 
 function decodeHTML(html) {
@@ -314,43 +529,72 @@ function checkAnswer(question, quizDataCookie) {
         }
     });
 
+    // Remove previous keyword definition if exists
+    const existingDefinition = document.getElementById('keyword-definition-container');
+    if (existingDefinition) {
+        existingDefinition.remove();
+    }
+
     if (selectedAnswer.dataset.answer === question.correct_answer) {
-        resultContainer.innerHTML = '<p class="correct-message">✓ Poprawna odpowiedź!</p>';
         selectedAnswer.classList.add('correct');
+        checkBtn.textContent = '✅ Correct!';
+        checkBtn.classList.add('disabled');
+        checkBtn.disabled = true;
+        checkBtn.style.fontWeight = 'bold';
+    } else {
+        selectedAnswer.classList.add('incorrect');
+        checkBtn.textContent = '❌ Incorrect! ';
+        checkBtn.classList.add('disabled');
+        checkBtn.disabled = true;
+        checkBtn.style.fontWeight = 'bold';
+    }
+
+        const questionContainer = document.getElementById('question-container');
+
 
         if (conclusionData) {
+            // Create question conclusion container
             const conclusionContainer = document.createElement('div');
             conclusionContainer.id = 'conclusion-question-container';
-            conclusionContainer.className = 'conclusion-container';
+            conclusionContainer.className = 'conclusion-question-container';
 
             const conclusionText = document.createElement('p');
-            conclusionText.innerHTML = decodeHTML(conclusionData);
+            // Podkreśl słowa kluczowe w podsumowaniu
+            conclusionText.innerHTML = highlightKeywords(decodeHTML(conclusionData), keywordsData);
             conclusionContainer.appendChild(conclusionText);
 
-            resultContainer.appendChild(conclusionContainer);
+            questionContainer.appendChild(conclusionContainer);
+
+            // Dodaj event listenery do podkreślonych słów w podsumowaniu
+            const keywordElements = conclusionContainer.querySelectorAll('.keyword-highlight');
+            keywordElements.forEach(element => {
+                element.addEventListener('click', async (e) => {
+                    const keyword = e.target.dataset.keyword;
+                    await showKeywordDefinition(keyword);
+                });
+            });
         }
 
         const nextBtn = document.createElement('button');
         nextBtn.id = 'next-question-btn';
-        nextBtn.textContent = 'Następne pytanie';
+        nextBtn.className = 'next-question-btn';
+        nextBtn.textContent = 'Next question';
+
         nextBtn.addEventListener('click', async () => {
-            await window.loadAndDisplayNextQuestion();
+            setTimeout(async () => {
+                const getQuestionButton = document.getElementById('next-question-btn');
+                getQuestionButton.innerHTML = `<span class="spinner"></span>`;
+                getQuestionButton.disabled = true;
+
+                const existingContainer = document.getElementById('question-container');
+                if (existingContainer) existingContainer.remove();
+                await window.loadAndDisplayNextQuestion();
+            }, 300);
         });
-        resultContainer.appendChild(nextBtn);
-    } else {
-        resultContainer.innerHTML = '<p class="incorrect-message">✗ Błędna odpowiedź!</p>';
-        selectedAnswer.classList.add('incorrect');
-        
-        // Po 2 sekundach resetuj pytanie
-        setTimeout(() => {
-            resultContainer.innerHTML = '';
-            document.querySelectorAll('.answer-btn').forEach(btn => {
-                btn.disabled = false;
-                btn.classList.remove('selected', 'correct', 'incorrect');
-            });
-            checkBtn.style.display = 'block';
-        }, 2000);
-    }
+
+        const container = document.querySelector('.container');
+        container.appendChild(nextBtn);
     
-    checkBtn.style.display = 'none';
+    
+
 }
