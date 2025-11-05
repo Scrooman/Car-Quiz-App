@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const quizApiContainer = document.getElementById('quiz-api-buttons'); // było 'quiz-api-container'
-    const aiApiContainer = document.getElementById('ai-api-buttons');     // było 'ai-api-container'
+    const quizApiContainer = document.getElementById('quiz-api-providers-buttons'); // było 'quiz-api-container'
+    const aiApiContainer = document.getElementById('ai-api-providers-buttons');     // było 'ai-api-container'
     const startButton = document.getElementById('start-button');
 
     let selectedQuizApi = null;
@@ -19,21 +19,38 @@ document.addEventListener('DOMContentLoaded', () => {
         apiList.forEach(api => {
             const button = document.createElement('button');
             button.textContent = api.name;
-            button.classList.add('api-button');
+            button.classList.add('quiz-api-providers-button');
+            
             button.addEventListener('click', () => {
                 if (type === 'quiz') {
                     selectedQuizApi = api.name;
+                    
                 } else {
                     selectedAiApi = api.name;
+                    
                 }
                 updateButtonStyles(container, type);
             });
             container.appendChild(button);
+            // Disable button if it says "Coming Soon..."
+            const disabledQuizButtons = container.querySelectorAll('.quiz-api-providers-button');
+            for (const button of disabledQuizButtons) {
+                if (button.textContent === "Coming Soon...") {
+                    button.disabled = true;
+                }
+            }
+
+            const disabledAiButtons = container.querySelectorAll('.ai-api-providers-button');
+            for (const button of disabledAiButtons) {
+                if (button.textContent === "Coming Soon...") {
+                    button.disabled = true;
+                }
+            }
         });
     }
 
     function updateButtonStyles(container, type) {
-        const buttons = container.querySelectorAll('.api-button');
+        const buttons = container.querySelectorAll('.quiz-api-providers-button');
         buttons.forEach(button => {
             button.classList.remove('selected');
         });

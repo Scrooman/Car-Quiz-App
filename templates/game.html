@@ -8,9 +8,14 @@
 </head>
 <body>
     <div class="container">
-        <h1>Car Quiz Game</h1>
-        <div id="selected-quiz-api"></div>
-        <div id="selected-ai-api"></div>        
+        <img src="{{ url_for('static', filename='/data/Icon_Car_Quiz_Game.png') }}" alt="Car Quiz Logo" class="logo">
+        <p style="align-self: center; font-size: 12px;">Selected providers</p>
+        <div class="providers-container">
+            <div class="providers-inner-container"></div>
+            <div id="selected-quiz-api" class="provider-tab"></div>
+            <div id="selected-ai-api" class="provider-tab"></div>
+        </div>
+        <h3 style="align-self: left; color: var(--accent-color);">1. Pick a category</h3>
         <div id="quiz-categories-container">
             <div class="container-title">Categories</div>
             <div id="quiz-categories-inner-container">
@@ -18,25 +23,26 @@
                 </div>
             </div>
         </div>
-        
+
+        <h3 style="align-self: left; color: var(--accent-color);">2. Configure your question</h3>
         <div id="quiz-settings-container">
             <div id="quiz-settings-inner-container">
                 <div class="container-title">Quiz settings</div>
                 <div class="settings-group">
-                    <label for="difficulty">Poziom trudności:</label>
+                    <label for="difficulty">Difficulty:</label>
                     <select id="difficulty">
-                        <option value="">Dowolny</option>
-                        <option value="easy">Łatwy</option>
-                        <option value="medium">Średni</option>
-                        <option value="hard">Trudny</option>
+                        <option value="">Any</option>
+                        <option value="easy">Easy</option>
+                        <option value="medium">Medium</option>
+                        <option value="hard">Hard</option>
                     </select>
                 </div>
                 <div class="settings-group">
-                    <label for="type">Typ pytań:</label>
+                    <label for="type">Question Type:</label>
                     <select id="type">
-                        <option value="">Dowolny</option>
-                        <option value="multiple">Wybór wielokrotny</option>
-                        <option value="boolean">Prawda/Fałsz</option>
+                        <option value="">Any</option>
+                        <option value="multiple">Multiple Choice</option>
+                        <option value="boolean">True/False</option>
                     </select>
                 </div>
                 <div class="settings-group">
@@ -46,7 +52,8 @@
             </div>
         </div>
 
-        <button id="get-question-button" class="button">Get Question</button>
+        <h3 style="align-self: left; color: var(--accent-color);">3. And...</h3>
+        <button id="get-question-button" class="button" style="font-weight: bold;">Let's Quiz!</button>
     </div>
     <script src="{{ url_for('static', filename='js/game.js') }}"></script>
 </body>

@@ -8,19 +8,28 @@
 </head>
 <body>
     <div class="container">
-        <h1>Welcome to the Car Quiz App</h1>
-        
-        <div class="quiz-api-container">
-            <h2>Select Quiz API Provider</h2>
-            <div id="quiz-api-buttons"></div>
+        <img src="{{ url_for('static', filename='/data/Icon_Car_Quiz_Game.png') }}" alt="Car Quiz Logo" class="logo">
+        <h1 style="align-self: center; color: var(--accent-color);"> How to get Started?</h1>
+        <h3 style="align-self: left; color: var(--accent-color);">1. Select Quiz provider</h3>
+        <div id="quiz-api-providers-container">
+            <div class="container-title">Quiz Providers</div>
+            <div id="quiz-api-providers-inner-container">
+                <div id="quiz-api-providers-buttons">
+                </div>
+            </div>
         </div>
 
-        <div class="ai-api-container">
-            <h2>Select AI API Provider</h2>
-            <div id="ai-api-buttons"></div>
+        <h3 style="align-self: left; color: var(--accent-color);">2. Select AI provider</h3>
+        <div id="ai-api-providers-container">
+            <div class="container-title">AI Providers</div>
+            <div id="ai-api-providers-inner-container">
+                <div id="ai-api-providers-buttons">
+                </div>
+            </div>
         </div>
 
-        <button id="start-button">Start</button>
+        <h3 style="align-self: left; color: var(--accent-color);">3. And...</h3>
+        <button class="start-button" id="start-button" style="font-weight: bold;">START!</button>
     </div>
 
     <script src="{{ url_for('static', filename='js/index.js') }}"></script>

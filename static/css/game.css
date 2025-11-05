@@ -21,6 +21,12 @@ h1 {
     color: #333;
 }
 
+.logo {
+    border: 9px solid var(--border-color);
+    max-width: 6rem;
+    align-self: center;
+}
+
 .container {
     max-width: 600px;
     margin: 0 auto;
@@ -44,11 +50,47 @@ h1 {
     position: absolute;
     top: -15px;
     left: 15px;
-    border: 3px solid #03070C;
     box-shadow: 0 2px 8px var(--shadow-color);
     padding: 5px 14px;
     border-radius: 12px;
     border: 2px solid var(--border-color);
+}
+
+.providers-container {
+    margin-top: -5px;
+    margin-bottom: 1rem;
+    display: flex;
+    gap: 4px;
+    flex-direction: row;
+    justify-content: center;
+    border: 2px dotted var(--border-color);
+    padding: 15px;
+    box-shadow: 0 2px 8px var(--shadow-color);
+    border-radius: 10px;
+}
+
+.providers-inner-container {
+    margin-top: 0.5rem;
+    margin-bottom: 1rem;
+    display: flex;
+    gap: 4px;
+    flex-direction: row;
+    justify-content: center;
+}
+
+.provider-tab {
+    background: #e0d6b4ab;
+    color: #1a1a2e;
+    height: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 12px;
+    box-shadow: 0 2px 8px var(--shadow-color);
+    padding: 5px 14px;
+    border-radius: 12px;
+    border: 2px dotted var(--border-color);
 }
 
 .button {
@@ -122,11 +164,12 @@ h1 {
 
 #quiz-categories-container {
     position: relative;
-    margin-top: 20px;
+    margin-top: 0.5rem;
+    margin-bottom: 1rem;
     display: flex;
     gap: 4px;
     flex-direction: column;
-    max-height: 12em;
+    height: 12em;
     border: 2px solid var(--border-color);
     border-radius: 8px;
     background-color: var(--background-color);
@@ -193,9 +236,22 @@ h1 {
 .introduction-question-inner-container {
     overflow: scroll;
     max-height: 15rem;
+    transition: max-height 0.5s ease-out, opacity 0.3s ease-out;
+}
+
+.introduction-question-inner-container.loading {
+    max-height: 3rem;
+    opacity: 0.7;
+}
+
+.introduction-question-inner-container.loaded {
+    max-height: 15rem;
+    opacity: 1;
+    animation: expandIn 0.5s ease-out;
 }
 
 .conclusion-question-container {
+    position: relative;
     margin-top: 20px;
     padding: 15px;
     border-radius: 10px;
@@ -208,6 +264,11 @@ h1 {
 .conclusion-question-container h3 {
     margin-bottom: 20px;
     color: #333;
+}
+
+.conclusion-question-inner-container {
+    overflow: scroll;
+    max-height: 15rem;
 }
 
 .answers-container {
@@ -256,6 +317,71 @@ h1 {
     cursor: not-allowed;
     opacity: 0.8;
 }
+
+/* Przyciski odpowiedzi - pop in */
+.category-btn,
+.answer-btn {
+    animation: popIn 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) backwards;
+}
+
+.answer-btn:nth-child(1) { animation-delay: 0.1s; }
+.answer-btn:nth-child(2) { animation-delay: 0.2s; }
+.answer-btn:nth-child(3) { animation-delay: 0.3s; }
+.answer-btn:nth-child(4) { animation-delay: 0.4s; }
+
+.category-btn:nth-child(1) { animation-delay: 0.1s; }
+.category-btn:nth-child(2) { animation-delay: 0.2s; }
+.category-btn:nth-child(3) { animation-delay: 0.3s; }
+.category-btn:nth-child(4) { animation-delay: 0.4s; }
+.category-btn:nth-child(5) { animation-delay: 0.5s; }
+
+
+@keyframes popIn {
+    from {
+        opacity: 0;
+        transform: scale(0.5);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+
+#quiz-settings-container {
+    animation: slideInFromBottom 0.9s ease-out;
+}
+
+@keyframes slideInFromBottom {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+#quiz-categories-container,
+.question-container,
+.introduction-question-container,
+.conclusion-question-container,
+.keyword-definition-container {
+    animation: slideInFromTop 0.9s ease-out;
+}
+
+@keyframes slideInFromTop {
+    from {
+        opacity: 0;
+        transform: translateY(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 
 .check-answer-btn, 
 .next-question-btn {
@@ -313,7 +439,8 @@ h1 {
 
 #quiz-settings-container {
     position: relative;
-    margin: 20px 0;
+    margin-top: 0.5rem;
+    margin-bottom: 1rem;
     padding: 15px;
     border: 2px solid var(--border-color);
     box-shadow: 0 2px 8px var(--shadow-color);
@@ -349,6 +476,8 @@ h1 {
     border: 1px solid var(--border-color);
     border-radius: 4px;
     font-size: 14px;
+    background-color: var(--button-bg-color);
+    color: var(--accent-color);
 }
 
 .settings-group input:focus,
@@ -392,6 +521,29 @@ h1 {
     overflow: scroll;
     padding-top: 0px;
     margin-bottom: 1em;
+    transition: max-height 0.5s ease-out, opacity 0.3s ease-out;
+}
+
+.keyword-definition-inner-container.loading {
+    max-height: 3rem;
+    opacity: 0.7;
+}
+
+.keyword-definition-inner-container.loaded {
+    max-height: 15rem;
+    opacity: 1;
+    animation: expandIn 0.5s ease-out;
+}
+
+@keyframes expandIn {
+    from {
+        max-height: 3rem;
+        opacity: 0.7;
+    }
+    to {
+        max-height: 15rem;
+        opacity: 1;
+    }
 }
 
 @keyframes slideIn {

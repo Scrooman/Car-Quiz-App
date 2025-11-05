@@ -2,11 +2,17 @@
     "quiz_api": [
         {
             "name": "Trivia API"
+        },
+        {
+            "name": "Coming Soon..."
         }
     ],
     "ai_api": [
         {
             "name": "Gemini"
+        },
+        {
+            "name": "Coming Soon..."
         }
     ]
 }

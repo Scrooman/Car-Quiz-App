@@ -33,8 +33,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Wyświetl wybrane API
     const selectedQuizAPI = getCookie('quiz_api_providers');
     const selectedAIAPI = getCookie('ai_api_providers');
-    quizAPIContainer.textContent = selectedQuizAPI ? `Selected Quiz API: ${selectedQuizAPI}` : 'No Quiz API selected.';
-    aiAPIContainer.textContent = selectedAIAPI ? `Selected AI API: ${selectedAIAPI}` : 'No AI API selected.';
+    quizAPIContainer.textContent = selectedQuizAPI ? `${selectedQuizAPI}` : 'No Quiz API selected.';
+    aiAPIContainer.textContent = selectedAIAPI ? `${selectedAIAPI}` : 'No AI API selected.';
 
     // Ładuj kategorie asynchronicznie
     if (quizCategoriesCookie === "local_quiz_categories") {
@@ -389,6 +389,11 @@ function displayQuestion(question, quizDataCookie) {
     questionInnerContainer.appendChild(resultContainer);
 
     document.querySelector('.container').appendChild(container);
+    // Przewiń do kontenera pytania
+    questionInnerContainer.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'end' 
+    });
 }
 
 function displayQuestionDescription(introductionData) {
@@ -404,11 +409,27 @@ function displayQuestionDescription(introductionData) {
         // remove loading state
         introductionInnerContainer.innerHTML = '';
 
+        // Dodaj klasę do animacji rozciągania
+        introductionInnerContainer.classList.add('loading');
+            
+
         const introText = document.createElement('p');
         introText.style.margin = '0px';
         // Podkreśl słowa kluczowe
         introText.innerHTML = highlightKeywords(decodeHTML(introductionData), keywordsData);
         introductionInnerContainer.appendChild(introText);
+
+        // Usuń klasę loading i dodaj loaded dla animacji
+        setTimeout(() => {
+            introductionInnerContainer.classList.remove('loading');
+            introductionInnerContainer.classList.add('loaded');
+            
+            // Przewiń ponownie po załadowaniu treści
+            introductionInnerContainer.scrollIntoView({ 
+                behavior: 'smooth', 
+                block: 'end' 
+            });
+        }, 50);
 
         // Dodaj event listenery do podkreślonych słów
         const keywordElements = introductionInnerContainer.querySelectorAll('.keyword-highlight');
@@ -462,6 +483,14 @@ async function showKeywordDefinition(keyword) {
     keywordDefinitionContainer.className = 'keyword-definition-container';
     questionContainer.appendChild(keywordDefinitionContainer);
 
+    setTimeout(() => {
+        // Przewiń do kontenera
+        keywordDefinitionContainer.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'end' 
+        });
+    }, 50);
+
     // Create container title
     const containerTitle = document.createElement('div');
     containerTitle.className = 'container-title';
@@ -470,7 +499,7 @@ async function showKeywordDefinition(keyword) {
 
     // Create keyword definition inner container
     const keywordDefinitionInnerContainer = document.createElement('div');
-    keywordDefinitionContainer.id = 'keyword-definition-inner-container';
+    keywordDefinitionInnerContainer.id = 'keyword-definition-inner-container';
     keywordDefinitionInnerContainer.className = 'keyword-definition-inner-container';
 
     // Show loading state
@@ -494,9 +523,22 @@ async function showKeywordDefinition(keyword) {
         const data = await response.json();
 
         if (data.definition) {
+            // Dodaj klasę do animacji rozciągania
+            keywordDefinitionInnerContainer.classList.add('loading');
             keywordDefinitionInnerContainer.innerHTML = `
                 ${data.definition}
             `;
+            // Usuń klasę loading i dodaj loaded dla animacji
+            setTimeout(() => {
+                keywordDefinitionInnerContainer.classList.remove('loading');
+                keywordDefinitionInnerContainer.classList.add('loaded');
+                
+                // Przewiń ponownie po załadowaniu treści
+                keywordDefinitionContainer.scrollIntoView({ 
+                    behavior: 'smooth', 
+                    block: 'end' 
+                });
+            }, 50);
         } else {
             keywordDefinitionInnerContainer.innerHTML = '<p class="error-message">Nie udało się załadować definicji.</p>';
         }
@@ -558,15 +600,27 @@ function checkAnswer(question, quizDataCookie) {
             conclusionContainer.id = 'conclusion-question-container';
             conclusionContainer.className = 'conclusion-question-container';
 
+            // create container title
+            const containerTitle = document.createElement('div');
+            containerTitle.className = 'container-title';
+            containerTitle.textContent = `Conclusion`;
+            conclusionContainer.appendChild(containerTitle);
+            
+            // Create question conclusion inner container
+            const conclusionInnerContainer = document.createElement('div');
+            conclusionInnerContainer.className = 'conclusion-question-inner-container';
+            conclusionContainer.appendChild(conclusionInnerContainer);
+
             const conclusionText = document.createElement('p');
+            conclusionText.style.margin = '0px';
             // Podkreśl słowa kluczowe w podsumowaniu
             conclusionText.innerHTML = highlightKeywords(decodeHTML(conclusionData), keywordsData);
-            conclusionContainer.appendChild(conclusionText);
+            conclusionInnerContainer.appendChild(conclusionText);
 
             questionContainer.appendChild(conclusionContainer);
 
             // Dodaj event listenery do podkreślonych słów w podsumowaniu
-            const keywordElements = conclusionContainer.querySelectorAll('.keyword-highlight');
+            const keywordElements = conclusionInnerContainer.querySelectorAll('.keyword-highlight');
             keywordElements.forEach(element => {
                 element.addEventListener('click', async (e) => {
                     const keyword = e.target.dataset.keyword;
