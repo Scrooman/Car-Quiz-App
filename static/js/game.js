@@ -63,9 +63,22 @@ document.addEventListener('DOMContentLoaded', () => {
     
     if (temperatureSlider && temperatureValue) {
         temperatureSlider.addEventListener('input', (e) => {
-            temperatureValue.textContent = e.target.value;
-            console.log('Selected AI API Temperature:', e.target.value);
+            const value = parseFloat(e.target.value);
+            let label = '';
+            
+            if (value <= 0.3) {
+                label = `🎯 Precise (${value})`;
+            } else if (value <= 0.6) {
+                label = `⚖️ Balanced (${value})`;
+            } else {
+                label = `🎨 Creative (${value})`;
+            }
+            
+            temperatureValue.textContent = label;
         });
+        
+        // Ustaw początkową wartość
+        temperatureSlider.dispatchEvent(new Event('input'));
     }
 
     function loadQuestionsFromLocal() {
@@ -145,11 +158,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 introductionInnerContainer.appendChild(introText);
                 const temperatureValue = document.getElementById('temperature').value;
 
-                
+                // Pobierz wybrany typ promptu
+                const introductionPromptSelect = document.getElementById('introduction_prompt');
+                const selectedPromptType = introductionPromptSelect ? introductionPromptSelect.value : '';
+
                 
                 const params = new URLSearchParams({
                     temperature: temperatureValue,
                     category: question.category,
+                    introduction_prompt_type: selectedPromptType,  // Dodaj typ promptu
                     question: question.question,
                     correct_answer: question.correct_answer,
                     incorrect_answers: question.incorrect_answers.join(', ')

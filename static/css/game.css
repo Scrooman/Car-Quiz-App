@@ -466,7 +466,7 @@ h1 {
     display: block;
     margin-bottom: 5px;
     font-weight: bold;
-    color: var(--button-text-color);
+    color: var(--accent-color);
 }
 
 .settings-group input,
@@ -477,7 +477,7 @@ h1 {
     border-radius: 4px;
     font-size: 14px;
     background-color: var(--button-bg-color);
-    color: var(--accent-color);
+    color: var(--button-text-color);
 }
 
 .settings-group input:focus,
@@ -577,3 +577,53 @@ h1 {
   0% { transform: rotate(0deg);}
   100% { transform: rotate(360deg);}
 }
+
+/* Reset domyślnych stylów suwaka */
+input[type="range"] {
+    appearance: none;
+    outline: none;
+    cursor: pointer;
+    max-width: 94%;
+}
+
+/* === ŚCIEŻKA SUWAKA (track) === */
+
+/* Chrome, Safari, Edge */
+input[type="range"]::-webkit-slider-runnable-track {
+    background: var(--button-bg-color); 
+}
+
+/* Firefox */
+input[type="range"]::-moz-range-track {
+    background: var(--button-bg-color); 
+}
+
+
+/* Chrome, Safari, Edge */
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    background: var(--button-hover-bg-color);
+    border: 3px solid var(--accent-color);
+    border-radius: 50%;
+    cursor: grab;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+    transition: all 0.2s ease;
+}
+
+/* Firefox */
+input[type="range"]::-moz-range-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    background: var(--button-hover-bg-color);
+    border: 3px solid var(--accent-color);
+    border-radius: 50%;
+    cursor: grab;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+    transition: all 0.2s ease;
+}
+

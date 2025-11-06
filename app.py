@@ -37,6 +37,19 @@ else:
         "ai_api": os.getenv('AI_API_PROVIDERS', '').split(',')
     }
 
+# Wczytaj prompty z pliku JSON
+try:
+    with open('static/data/prompts.json', 'r', encoding='utf-8') as f:
+        prompts_data = json.load(f)
+        introduction_prompts = prompts_data.get('introduction_prompts', [])
+except FileNotFoundError:
+    introduction_prompts = []
+    app.logger.warning('prompts.json file not found')
+except json.JSONDecodeError:
+    introduction_prompts = []
+    app.logger.error('Error parsing prompts.json')
+    
+
 @app.route('/')
 def index():
     resp = make_response(render_template('index.html'))
@@ -44,7 +57,8 @@ def index():
 
 @app.route('/game')
 def game():
-    resp = make_response(render_template('game.html'))
+
+    resp = make_response(render_template('game.html', introduction_prompts=introduction_prompts))
     resp.set_cookie('quiz_api_providers', QUIZ_API_PROVIDERS)
     resp.set_cookie('ai_api_providers', AI_API_PROVIDERS)
     resp.set_cookie('quiz_categories', QUIZ_CATEGORIES)
@@ -84,6 +98,47 @@ def generate_description():
     question = request.args.get('question', '')
     correct_answer = request.args.get('correct_answer', '')
     incorrect_answers = request.args.get('incorrect_answers', '')
+    introduction_prompt_type = request.args.get('introduction_prompt_type', '')
+
+    if introduction_prompt_type:
+        for prompt in introduction_prompts:
+            if prompt['id'] == introduction_prompt_type:
+                # Wydobądź wartości 'text' z zagnieżdżonych obiektów
+                system_instruction = prompt['modality']['systemInstruction']  # Usuń [0] - to nie jest tablica
+                systemInstruction_parts = []
+                
+                # Iteruj przez klucze w systemInstruction (role, descriptionTask, etc.)
+                for key, value in system_instruction.items():
+                    if isinstance(value, dict) and 'text' in value:
+                        systemInstruction_parts.append({"text": value['text']})
+                
+                print(f"System instruction parts for prompt type {introduction_prompt_type}: {systemInstruction_parts}")
+                
+                # Wydobądź description z generationConfig
+                introduction_prompt_type_description = prompt['modality']['generationConfig']['introduction']['description']
+                print(f"Using introduction prompt type id {introduction_prompt_type}")
+                break
+        else:
+            # Jeśli nie znaleziono promptu, użyj domyślnych wartości
+            systemInstruction_parts = [
+                {"text": "Jesteś ekspertem ds. edukacji i tworzenia treści kontekstowych."},
+                {"text": "Twoim zadaniem jest wygenerowanie 5-zdaniowego wprowadzenia do zadanego tematu pytania."},
+                {"text": "oraz 5-zdaniowego podsumowania rozwijającego kontekst prawidłowej odpowiedzi."},
+                {"text": "Dodatkowo, wygeneruj listę najciekawszych terminów, które znajdują się w treści wprowadzenia i podsumowania, dla których użytkownik może chcieć pogłębić wiedzę."},
+                {"text": "Odpowiedzi muszą być precyzyjne, edukacyjne i generowane **tylko w języku polskim**."}
+            ]
+            introduction_prompt_type_description = "Pięciozdaniowe wprowadzenie do tematu pytania, nakreślające kontekst i znaczenie zagadnienia."
+    else:
+        # Domyślne wartości gdy nie wybrano typu promptu
+        systemInstruction_parts = [
+            {"text": "Jesteś ekspertem ds. edukacji i tworzenia treści kontekstowych."},
+            {"text": "Twoim zadaniem jest wygenerowanie 5-zdaniowego wprowadzenia do zadanego tematu pytania."},
+            {"text": "oraz 5-zdaniowego podsumowania rozwijającego kontekst prawidłowej odpowiedzi."},
+            {"text": "Dodatkowo, wygeneruj listę najciekawszych terminów, które znajdują się w treści wprowadzenia i podsumowania, dla których użytkownik może chcieć pogłębić wiedzę."},
+            {"text": "Odpowiedzi muszą być precyzyjne, edukacyjne i generowane **tylko w języku polskim**."}
+        ]
+        introduction_prompt_type_description = "Pięciozdaniowe wprowadzenie do tematu pytania, nakreślające kontekst i znaczenie zagadnienia."
+
 
     # Sprawdź czy klucz API jest ustawiony
     if not GEMINI_API_KEY or not GEMINI_API_URL:
@@ -106,23 +161,17 @@ def generate_description():
             }
         ],
         "systemInstruction": {
-            "parts": [
-                {
-                    "text": "Jesteś ekspertem ds. edukacji i tworzenia treści kontekstowych. Twoim zadaniem jest wygenerowanie 5-zdaniowego wprowadzenia do zadanego tematu pytania "
-                    "oraz 5-zdaniowego podsumowania rozwijającego kontekst prawidłowej odpowiedzi. Odpowiedzi muszą być precyzyjne, edukacyjne i generowane **tylko w języku polskim**. "
-                    "Dodatkowo, wygeneruj listę najciekawszych terminów, które znajdują się w treści wprowadzenia i podsumowania, dla któych użytkownik może chcieć pogłębić wiedzę."
-                }
-            ]
+            "parts": systemInstruction_parts
         },
         "generationConfig": {
-            "temperature": temperature,
+            "temperature":  float(temperature),
             "responseMimeType": "application/json",
             "responseSchema": {
                 "type": "object",
                 "properties": {
                     "wprowadzenie": {
                         "type": "string",
-                        "description": "Pięciozdaniowe wprowadzenie do tematu pytania, nakreślające kontekst i znaczenie zagadnienia,które wyjaśnia okoliczne fakty i ważne informacje dotyczące zadanego pytania, ale bez zdradzania prawidłowej odpowiedzi."
+                        "description": introduction_prompt_type_description
                     },
                     "podsumowanie": {
                         "type": "string",
@@ -203,7 +252,7 @@ def get_keyword_definition():
             "systemInstruction": {
                 "parts": [
                     {
-                        "text": "Jesteś ekspertem edukacyjnym. Twoim zadaniem jest wyjaśnianie pojęć w sposób prosty i zrozumiały. "
+                        "text": "Jesteś ekspertem edukacyjnym. Twoim zadaniem jest wyjaśnianie pojęć w usystematyzowany sposób podając definicje, rozwijając je oraz przywołując przykłady. "
                                "Odpowiedzi generuj **tylko w języku polskim**. "
                                "WAŻNE: Jeśli wyjaśnienie jest w kontekście pytania quizowego, NIE MOŻESZ w żaden sposób sugerować ani zdradzać prawidłowej odpowiedzi. "
                                "Skup się na ogólnym wyjaśnieniu terminu bez wskazywania konkretnych odpowiedzi."

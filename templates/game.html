@@ -46,7 +46,16 @@
                     </select>
                 </div>
                 <div class="settings-group">
-                    <label for="temperature">AI API Temperature: <span id="temperature-value">0.5</span></label>
+                    <label for="introduction_prompt">Prompt type:</label>
+                    <select id="introduction_prompt">
+                        <option value="">Any</option>
+                        {% for prompt in introduction_prompts %}
+                        <option value="{{ prompt.id }}">{{ prompt.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="settings-group">
+                    <label for="temperature">Content Style:<span id="temperature-value"></span></label>
                     <input type="range" id="temperature" min="0.1" max="0.9" step="0.1" value="0.5">
                 </div>
             </div>
