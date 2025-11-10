@@ -7,9 +7,12 @@
     <title>Car Quiz App</title>
 </head>
 <body>
-    <div class="container">
+    <div class="container" id ="main-container">
         <img src="{{ url_for('static', filename='/data/Icon_Car_Quiz_Game.png') }}" alt="Car Quiz Logo" class="logo">
         <h1 style="align-self: center; color: var(--accent-color);"> How to get Started?</h1>
+
+        
+        
         <h3 style="align-self: left; color: var(--accent-color);">1. Select Quiz provider</h3>
         <div id="quiz-api-providers-container">
             <div class="container-title">Quiz Providers</div>
@@ -29,9 +32,37 @@
         </div>
 
         <h3 style="align-self: left; color: var(--accent-color);">3. And...</h3>
-        <button class="start-button" id="start-button" style="font-weight: bold;">START!</button>
+        <button class="start-button" id="start-button">START!</button>
+        <h3 id="h3-stats-info" style="margin-top: 0; align-self: left; color: var(--accent-color); display: none">...if you have an account, you can log in to track your stats...</h3>
+
+        <div id="auth-container" style="display: none;">
+            <div class="container-title">User Authentication</div>
+            <div id="auth-inner-container">
+                <div class="auth-group">
+                    <label for="team-name">Team Name:</label>
+                    <input type="text" id="team-name" class="auth-input" placeholder="Enter your team name">
+                </div>
+                <div class="auth-group">
+                    <label for="team-password">Password:</label>
+                    <input type="password" id="team-password" class="auth-input" placeholder="Enter your password">
+                </div>
+                <div class="auth-group" id="repeat-password-group">
+                    <label for="repeat-password" id="repeat-password-label" style="display: none;">Repeat Password:</label>
+                </div>
+                    <br>
+                <div id="auth-buttons-container">
+                    <button class="start-button" id="login-button">Log In</button>
+                    <button class="start-button" id="register-button">Register</button>
+                </div>
+            </div>
+        </div>
+        <button class="start-button" id="play-button" style="display: none;">Play!</button>
+
+        <h3 id="h3-guest-play-info" style="margin-top: 0; align-self: left; color: var(--accent-color); display: none">...or you can skip that and play anyway!</h3>
+
     </div>
 
     <script src="{{ url_for('static', filename='js/index.js') }}"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
 </body>
 </html>

@@ -1,0 +1,30 @@
+{
+  "candidates": [
+    {
+      "content": {
+        "parts": [
+          {
+            "text": "{\n  \"wprowadzenie\": \"Każdy kraj na świecie posiada swoją unikalną nazwę, która często ma głębokie korzenie historyczne i kulturowe. Wiele narodów używa innej nazwy dla swojego państwa w języku ojczystym niż ta, która jest powszechnie znana na arenie międzynarodowej. Znajomość rodzimej nazwy kraju jest kluczowa dla zrozumienia jego tożsamości i szacunku dla jego kultury. Pytanie o polską nazwę Polski dotyka tego właśnie aspektu, podkreślając znaczenie języka w kształtowaniu narodowej świadomości. Jest to podstawowa wiedza geograficzna i kulturowa, która pozwala lepiej orientować się w świecie.\",\n  \"podsumowanie\": \"Prawidłową odpowiedzią na pytanie o nazwę Polski w języku polskim jest 'Polska'. Ta nazwa jest oficjalnym i jedynym poprawnym określeniem naszego kraju używanym przez Polaków. Etymologicznie, słowo 'Polska' wywodzi się prawdopodobnie od nazwy plemienia Polan, które zamieszkiwało dorzecze Warty, a ich nazwa z kolei mogła pochodzić od słowa 'pole'. Używanie tej nazwy jest wyrazem narodowej tożsamości i dumy, odzwierciedlającym bogatą historię i kulturę. Wszelkie inne formy, takie jak 'Pupcia', 'Polszka' czy 'Póland', są niepoprawne i nie mają żadnego uzasadnienia w języku polskim.\",\n  \"słowa_kluczowe\": [\n    \"nazwa\",\n    \"kraj\",\n    \"język ojczysty\",\n    \"tożsamość\",\n    \"kultura\",\n    \"Polska\",\n    \"narodowa świadomość\",\n    \"wiedza geograficzna\",\n    \"Etymologicznie\",\n    \"plemienia Polan\",\n    \"dorzecze Warty\",\n    \"pole\"\n  ]\n}"
+          }
+        ],
+        "role": "model"
+      },
+      "finishReason": "STOP",
+      "index": 0
+    }
+  ],
+  "usageMetadata": {
+    "promptTokenCount": 196,
+    "candidatesTokenCount": 461,
+    "totalTokenCount": 1925,
+    "promptTokensDetails": [
+      {
+        "modality": "TEXT",
+        "tokenCount": 196
+      }
+    ],
+    "thoughtsTokenCount": 1268
+  },
+  "modelVersion": "gemini-2.5-flash",
+  "responseId": "DKMRaZXvIerVxN8Pgvn04Qs"
+}

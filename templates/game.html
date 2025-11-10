@@ -7,6 +7,20 @@
     <title>Game Page</title>
 </head>
 <body>
+    <div class="user-info-tab-container">
+        <div class="user-info-tab-inner-container">
+            <div id="team-name-display" class="user-info-tab">
+                <p>Team:&nbsp;</p>
+            </div>
+            <div id="team-score-display" class="user-info-tab">
+                <p>Score:&nbsp;</p>
+            </div>
+            <div id="team-answered-questions-display" class="user-info-tab">
+                <p>Quizzes:&nbsp;</p>
+            </div>
+        </div>
+    </div>
+
     <div class="container">
         <img src="{{ url_for('static', filename='/data/Icon_Car_Quiz_Game.png') }}" alt="Car Quiz Logo" class="logo">
         <p style="align-self: center; font-size: 12px;">Selected providers</p>
@@ -49,7 +63,7 @@
                     <label for="introduction_prompt">Prompt type:</label>
                     <select id="introduction_prompt">
                         <option value="">Any</option>
-                        {% for prompt in introduction_prompts %}
+                        {% for prompt in prompt_type %}
                         <option value="{{ prompt.id }}">{{ prompt.name }}</option>
                         {% endfor %}
                     </select>

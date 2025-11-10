@@ -6,6 +6,11 @@ let introductionData = '';
 let conclusionData = '';
 let keywordsData = [];
 
+let currentTeamName = getCookie('teamName');
+let currentTeamId = getCookie('teamId');
+
+let teamStats = localStorage.getItem('teamStats') ? JSON.parse(localStorage.getItem('teamStats')) : null;
+
 function getCookie(name) {
     const value = `; ${document.cookie}`;
     const parts = value.split(`; ${name}=`);
@@ -31,10 +36,34 @@ document.addEventListener('DOMContentLoaded', () => {
     const getQuestionButton = document.getElementById('get-question-button');
 
     // Wyświetl wybrane API
-    const selectedQuizAPI = getCookie('quiz_api_providers');
-    const selectedAIAPI = getCookie('ai_api_providers');
-    quizAPIContainer.textContent = selectedQuizAPI ? `${selectedQuizAPI}` : 'No Quiz API selected.';
-    aiAPIContainer.textContent = selectedAIAPI ? `${selectedAIAPI}` : 'No AI API selected.';
+    const selectedQuizApi = getCookie('selectedQuizApi');
+    const selectedAiApi = getCookie('selectedAiApi');
+    quizAPIContainer.textContent = selectedQuizApi ? `${selectedQuizApi}` : 'No Quiz API selected.';
+    aiAPIContainer.textContent = selectedAiApi ? `${selectedAiApi}` : 'No AI API selected.';
+
+    // wyświetl dane w user-info-tab
+    const teamNameDisplay = document.getElementById('team-name-display');
+    if (teamNameDisplay) {
+        const teamNameLabel = document.createElement('p');
+        teamNameLabel.style.fontWeight = '400';
+        teamNameDisplay.appendChild(teamNameLabel);
+        correctedName = currentTeamName === 'guest' ? 'Guest' : currentTeamName;
+        teamNameLabel.textContent = `${correctedName ? correctedName : 'Guest'}`;
+    }
+    const teamScoreDisplay = document.getElementById('team-score-display');
+    if (teamScoreDisplay) {
+        const teamScoreLabel = document.createElement('p');
+        teamScoreLabel.style.fontWeight = '400';
+        teamScoreDisplay.appendChild(teamScoreLabel);
+        teamScoreLabel.textContent = `${teamStats ? teamStats.total_points : 0} pts`;
+    }
+    const teamAnsweredQuestionsDisplay = document.getElementById('team-answered-questions-display');
+    if (teamAnsweredQuestionsDisplay) {
+        const teamAnsweredQuestionsLabel = document.createElement('p');
+        teamAnsweredQuestionsLabel.style.fontWeight = '400';
+        teamAnsweredQuestionsDisplay.appendChild(teamAnsweredQuestionsLabel);
+        teamAnsweredQuestionsLabel.textContent = `${teamStats ? teamStats.questions_answered : 0}`;
+    }
 
     // Ładuj kategorie asynchronicznie
     if (quizCategoriesCookie === "local_quiz_categories") {
@@ -129,73 +158,79 @@ document.addEventListener('DOMContentLoaded', () => {
     function loadQuestionDescriptionFromAPI(question) {
         return new Promise((resolve, reject) => {
             if (questionDescriptionCookie === "api_question_description") {
-                console.log('Loading question description from Gemini API...');
+                if (selectedAiApi) {
+                    console.log('Loading question description from Gemini API...');
 
-                // Remove previous question if exists
-                const existingContainer = document.getElementById('introduction-question-container');
-                if (existingContainer) existingContainer.remove();
+                    // Remove previous question if exists
+                    const existingContainer = document.getElementById('introduction-question-container');
+                    if (existingContainer) existingContainer.remove();
 
-                const questionContainer = document.getElementById('question-container');
-                // Create question introduction container
-                const introductionContainer = document.createElement('div');
-                introductionContainer.id = 'introduction-question-container';
-                introductionContainer.className = 'introduction-question-container';
-                questionContainer.appendChild(introductionContainer);
+                    const questionContainer = document.getElementById('question-container');
+                    // Create question introduction container
+                    const introductionContainer = document.createElement('div');
+                    introductionContainer.id = 'introduction-question-container';
+                    introductionContainer.className = 'introduction-question-container';
+                    questionContainer.appendChild(introductionContainer);
 
-                // Create container title
-                const containerTitle = document.createElement('div');
-                containerTitle.className = 'container-title';
-                containerTitle.textContent = `Introduction`;
-                introductionContainer.appendChild(containerTitle);
+                    // Create container title
+                    const containerTitle = document.createElement('div');
+                    containerTitle.className = 'container-title';
+                    containerTitle.textContent = `Introduction`;
+                    introductionContainer.appendChild(containerTitle);
 
-                // Create question introduction inner container
-                const introductionInnerContainer = document.createElement('div');
-                introductionInnerContainer.className = 'introduction-question-inner-container';
-                introductionContainer.appendChild(introductionInnerContainer);
+                    // Create question introduction inner container
+                    const introductionInnerContainer = document.createElement('div');
+                    introductionInnerContainer.className = 'introduction-question-inner-container';
+                    introductionContainer.appendChild(introductionInnerContainer);
 
-                const introText = document.createElement('p');
-                introText.innerHTML = `<span class="spinner"></span>Generating introduction...`;
-                introductionInnerContainer.appendChild(introText);
-                const temperatureValue = document.getElementById('temperature').value;
+                    const introText = document.createElement('p');
+                    introText.innerHTML = `<span class="spinner"></span>Generating introduction...`;
+                    introductionInnerContainer.appendChild(introText);
+                    const temperatureValue = document.getElementById('temperature').value;
 
-                // Pobierz wybrany typ promptu
-                const introductionPromptSelect = document.getElementById('introduction_prompt');
-                const selectedPromptType = introductionPromptSelect ? introductionPromptSelect.value : '';
+                    // Pobierz wybrany typ promptu
+                    const introductionPromptSelect = document.getElementById('introduction_prompt');
+                    const selectedPromptType = introductionPromptSelect ? introductionPromptSelect.value : '';
 
-                
-                const params = new URLSearchParams({
-                    temperature: temperatureValue,
-                    category: question.category,
-                    introduction_prompt_type: selectedPromptType,  // Dodaj typ promptu
-                    question: question.question,
-                    correct_answer: question.correct_answer,
-                    incorrect_answers: question.incorrect_answers.join(', ')
-                });
-
-                fetch(`/api/generate-description?${params.toString()}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.wprowadzenie && data.podsumowanie) {
-                            introductionData = data.wprowadzenie;
-                            conclusionData = data.podsumowanie;
-                            keywordsData = data.slowa_kluczowe || [];
-                            console.log('Loaded API introduction data:', introductionData);
-                            console.log('Loaded API conclusion data:', conclusionData);
-                            console.log('Loaded API keywords data:', keywordsData);
-                            // Odblokuj przycisk sprawdzania odpowiedzi
-                            const checkBtn = document.getElementById('check-answer-btn');
-                            checkBtn.disabled = false;
-                            checkBtn.textContent = 'Check';
-
-                            resolve();
-                        } else {
-                            reject(new Error('Invalid response from description API'));
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error loading question description from API:', error);
-                        reject(error);
+                    
+                    const params = new URLSearchParams({
+                        temperature: temperatureValue,
+                        category: question.category,
+                        introduction_prompt_type: selectedPromptType,  // Dodaj typ promptu
+                        question: question.question,
+                        correct_answer: question.correct_answer,
+                        incorrect_answers: question.incorrect_answers.join(', ')
                     });
+
+                    fetch(`/api/generate-description?${params.toString()}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.wprowadzenie && data.podsumowanie) {
+                                introductionData = data.wprowadzenie;
+                                conclusionData = data.podsumowanie;
+                                keywordsData = data.slowa_kluczowe || [];
+                                console.log('Loaded API introduction data:', introductionData);
+                                console.log('Loaded API conclusion data:', conclusionData);
+                                console.log('Loaded API keywords data:', keywordsData);
+                                // Odblokuj przycisk sprawdzania odpowiedzi
+                                const checkBtn = document.getElementById('check-answer-btn');
+                                checkBtn.disabled = false;
+                                checkBtn.textContent = 'Check';
+
+                                resolve();
+                            } else {
+                                reject(new Error('Invalid response from description API'));
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error loading question description from API:', error);
+                            reject(error);
+                            // przerwij działanie funkcji
+                            return;
+                        });
+                } else {
+                    reject(new Error('No AI API selected for question description'));
+                }
             } else {
                 resolve();
             }
@@ -217,6 +252,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const type = document.getElementById('type').value;
             const category = selectedCategory ? selectedCategory.id : '';
 
+            let questionData = {
+                categoryId: category,
+                categoryName: ''
+            };
+
             const params = new URLSearchParams({
                 amount: 1,
                 category: category,
@@ -230,7 +270,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (data.results && Array.isArray(data.results)) {
                         quizData = data.results;
                         console.log('Loaded quiz data from API:', quizData);
-                        displayQuestion(quizData[0], quizDataCookie);
+                        displayQuestion(quizData[0], category, quizDataCookie);
 
                         getQuestionButton.style.display = 'none';
 
@@ -239,7 +279,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         if (getNextQuestionButton) {
                             getNextQuestionButton.remove();
                         }
+                        questionData['categoryName'] = data.results[0].category;
 
+                        // zaktulizuj statystyki pytań zespołu
+                        updateTeamsQuestionStats(questionData);
 
                         resolve();
                     } else {
@@ -286,7 +329,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    async function loadAndDisplayNextQuestion() {
+    async function loadAndDisplayQuestion() {
         try {
             // Sprawdź czy to tryb lokalny czy API
             if (quizDataCookie === "local_quiz") {
@@ -323,16 +366,22 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!selectedCategory) {
             alert('Proszę wybrać kategorię pytań!');
             return;
+        } else if (!selectedQuizApi) {
+            alert('Proszę wybrać API quizu!');
+            return;
+        } else if (!selectedAiApi && questionDescriptionCookie === "api_question_description") {
+            alert('Proszę wybrać API AI do opisu pytania!');
+            return;
         }
-        await loadAndDisplayNextQuestion();
+        await loadAndDisplayQuestion();
         getQuestionButton.style.display = 'none';
     });
 
-    // Expose loadAndDisplayNextQuestion globally for use in checkAnswer
-    window.loadAndDisplayNextQuestion = loadAndDisplayNextQuestion;
+    // Expose loadAndDisplayQuestion globally for use in checkAnswer
+    window.loadAndDisplayQuestion = loadAndDisplayQuestion;
 });
 
-function displayQuestion(question, quizDataCookie) {
+function displayQuestion(question, category, quizDataCookie) {
     // Remove previous question if exists
     const existingContainer = document.getElementById('question-container');
     if (existingContainer) existingContainer.remove();
@@ -384,7 +433,7 @@ function displayQuestion(question, quizDataCookie) {
     checkBtn.className = 'check-answer-btn';
     checkBtn.textContent = 'Sprawdź';
     checkBtn.addEventListener('click', () => {
-        setTimeout(() => checkAnswer(question, quizDataCookie), 300);
+        setTimeout(() => checkAnswer(question, category, quizDataCookie), 300);
     });
 
     // Zablokuj przycisk tylko jeśli ładujesz opis z API
@@ -571,7 +620,53 @@ function decodeHTML(html) {
     return txt.value;
 }
 
-function checkAnswer(question, quizDataCookie) {
+function updateTeamsQuestionStats(questionData) {
+    fetch('/api/team/stats/question', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(questionData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            console.log('Team stats for question updated successfully:', data);
+            // Zaktualizuj wyświetlanie wyniku zespołu
+
+        } else {
+            console.error('Error updating team stats for question:', data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error updating team stats for question:', error);
+    });
+}
+
+function updateTeamsAnswerStats(answerData) {
+    fetch('/api/team/stats/answer', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(answerData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status) {
+            console.log('Team stats updated successfully:', data);
+            // Zaktualizuj wyświetlanie wyniku zespołu
+
+        } else {
+            console.error('Error updating team stats:', data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error updating team stats:', error);
+    });
+}
+
+function checkAnswer(question, category, quizDataCookie) {
     const selectedAnswer = document.querySelector('.answer-btn.selected');
     if (!selectedAnswer) {
         alert('Proszę wybrać odpowiedź!');
@@ -579,6 +674,11 @@ function checkAnswer(question, quizDataCookie) {
     }
     const resultContainer = document.getElementById('result-container');
     const checkBtn = document.getElementById('check-answer-btn');
+
+    let answerData = {
+        is_correct_answer: null,
+        category_id: category
+    };
     
     // Disable all answer buttons
     document.querySelectorAll('.answer-btn').forEach(btn => {
@@ -594,77 +694,87 @@ function checkAnswer(question, quizDataCookie) {
         existingDefinition.remove();
     }
 
+    // wykonaj akcje dla prawidłowej odpwoiedzi
     if (selectedAnswer.dataset.answer === question.correct_answer) {
         selectedAnswer.classList.add('correct');
         checkBtn.textContent = '✅ Correct!';
         checkBtn.classList.add('disabled');
         checkBtn.disabled = true;
         checkBtn.style.fontWeight = 'bold';
+
+        answerData.is_correct_answer = true;
+        console.log('answerData.is_correct_answer:', answerData.is_correct_answer);
     } else {
         selectedAnswer.classList.add('incorrect');
         checkBtn.textContent = '❌ Incorrect! ';
         checkBtn.classList.add('disabled');
         checkBtn.disabled = true;
         checkBtn.style.fontWeight = 'bold';
+        answerData.is_correct_answer = false;
+        console.log('answerData.is_correct_answer:', answerData.is_correct_answer);
     }
 
         const questionContainer = document.getElementById('question-container');
 
 
-        if (conclusionData) {
-            // Create question conclusion container
-            const conclusionContainer = document.createElement('div');
-            conclusionContainer.id = 'conclusion-question-container';
-            conclusionContainer.className = 'conclusion-question-container';
+    if (conclusionData) {
+        // Create question conclusion container
+        const conclusionContainer = document.createElement('div');
+        conclusionContainer.id = 'conclusion-question-container';
+        conclusionContainer.className = 'conclusion-question-container';
 
-            // create container title
-            const containerTitle = document.createElement('div');
-            containerTitle.className = 'container-title';
-            containerTitle.textContent = `Conclusion`;
-            conclusionContainer.appendChild(containerTitle);
-            
-            // Create question conclusion inner container
-            const conclusionInnerContainer = document.createElement('div');
-            conclusionInnerContainer.className = 'conclusion-question-inner-container';
-            conclusionContainer.appendChild(conclusionInnerContainer);
+        // create container title
+        const containerTitle = document.createElement('div');
+        containerTitle.className = 'container-title';
+        containerTitle.textContent = `Conclusion`;
+        conclusionContainer.appendChild(containerTitle);
+        
+        // Create question conclusion inner container
+        const conclusionInnerContainer = document.createElement('div');
+        conclusionInnerContainer.className = 'conclusion-question-inner-container';
+        conclusionContainer.appendChild(conclusionInnerContainer);
 
-            const conclusionText = document.createElement('p');
-            conclusionText.style.margin = '0px';
-            // Podkreśl słowa kluczowe w podsumowaniu
-            conclusionText.innerHTML = highlightKeywords(decodeHTML(conclusionData), keywordsData);
-            conclusionInnerContainer.appendChild(conclusionText);
+        const conclusionText = document.createElement('p');
+        conclusionText.style.margin = '0px';
+        // Podkreśl słowa kluczowe w podsumowaniu
+        conclusionText.innerHTML = highlightKeywords(decodeHTML(conclusionData), keywordsData);
+        conclusionInnerContainer.appendChild(conclusionText);
 
-            questionContainer.appendChild(conclusionContainer);
+        questionContainer.appendChild(conclusionContainer);
 
-            // Dodaj event listenery do podkreślonych słów w podsumowaniu
-            const keywordElements = conclusionInnerContainer.querySelectorAll('.keyword-highlight');
-            keywordElements.forEach(element => {
-                element.addEventListener('click', async (e) => {
-                    const keyword = e.target.dataset.keyword;
-                    await showKeywordDefinition(keyword);
-                });
+        // Dodaj event listenery do podkreślonych słów w podsumowaniu
+        const keywordElements = conclusionInnerContainer.querySelectorAll('.keyword-highlight');
+        keywordElements.forEach(element => {
+            element.addEventListener('click', async (e) => {
+                const keyword = e.target.dataset.keyword;
+                await showKeywordDefinition(keyword);
             });
-        }
-
-        const nextBtn = document.createElement('button');
-        nextBtn.id = 'next-question-btn';
-        nextBtn.className = 'next-question-btn';
-        nextBtn.textContent = 'Next question';
-
-        nextBtn.addEventListener('click', async () => {
-            setTimeout(async () => {
-                const getQuestionButton = document.getElementById('next-question-btn');
-                getQuestionButton.innerHTML = `<span class="spinner"></span>`;
-                getQuestionButton.disabled = true;
-
-                const existingContainer = document.getElementById('question-container');
-                if (existingContainer) existingContainer.remove();
-                await window.loadAndDisplayNextQuestion();
-            }, 300);
         });
+    }
 
-        const container = document.querySelector('.container');
-        container.appendChild(nextBtn);
+    const nextBtn = document.createElement('button');
+    nextBtn.id = 'next-question-btn';
+    nextBtn.className = 'next-question-btn';
+    nextBtn.textContent = 'Next question';
+
+    nextBtn.addEventListener('click', async () => {
+        setTimeout(async () => {
+            const getQuestionButton = document.getElementById('next-question-btn');
+            getQuestionButton.innerHTML = `<span class="spinner"></span>`;
+            getQuestionButton.disabled = true;
+
+            const existingContainer = document.getElementById('question-container');
+            if (existingContainer) existingContainer.remove();
+            await window.loadAndDisplayQuestion();
+        }, 300);
+    });
+
+    const container = document.querySelector('.container');
+    container.appendChild(nextBtn);
+
+    // Aktualizuj statystyki zespołu
+
+    updateTeamsAnswerStats(answerData);
     
     
 

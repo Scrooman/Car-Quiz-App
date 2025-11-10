@@ -38,3 +38,9 @@ Thumbs.db
 # Temporary files
 *.tmp
 api_response.json
+
+# Project specific
+config/
+*.json
+!static/data/*.json
+.env

@@ -1,16 +1,33 @@
-from flask import Flask, render_template, jsonify, make_response
+from flask import Flask, render_template, jsonify, make_response, session
 import os
 import json
 import requests
 from flask import request
 from dotenv import load_dotenv
+from google.cloud import firestore
+
+# Importuj moduły
+from modules import ai_logic, quiz, auth
+from database import get_team_stats, db
+
+from database import get_team_stats, db
+
+# Load .env file
+load_dotenv()
 
 app = Flask(__name__)
+app.secret_key = os.getenv('SECRET_KEY', 'your-secret-key-here')  # Dodaj do .env
+
+
+# Zarejestruj Blueprinty
+app.register_blueprint(ai_logic.bp, url_prefix='/api')
+app.register_blueprint(quiz.bp, url_prefix='/api')
+app.register_blueprint(auth.bp, url_prefix='/api/auth')
+
 
 # Load environment variables
 ENVIRONMENT = os.getenv('ENVIRONMENT', 'local')
-# Load .env file
-load_dotenv()
+
 QUIZ_CATEGORIES = os.getenv('QUIZ_CATEGORIES', 'api_quiz_categories')
 QUIZ_DATA = os.getenv('QUIZ_DATA', 'api_quiz')
 QUESTION_DESCRIPTION = os.getenv('QUESTION_DESCRIPTION', 'api_question_description')
@@ -21,6 +38,13 @@ AI_API_PROVIDERS = os.getenv('AI_API_PROVIDERS', '')
 GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', '')
 GEMINI_API_URL = os.getenv('GEMINI_API_URL', '')
 TRIVIA_API_URL = os.getenv('TRIVIA_API_URL', 'https://opentdb.com/api.php')
+
+
+# Sprawdź czy Firestore jest zainicjalizowany
+if db:
+    app.logger.info('Firestore connection available in app.py')
+else:
+    app.logger.warning('Firestore not available in app.py')
 
 # Load local API providers if running locally
 if ENVIRONMENT == 'local':
@@ -41,12 +65,12 @@ else:
 try:
     with open('static/data/prompts.json', 'r', encoding='utf-8') as f:
         prompts_data = json.load(f)
-        introduction_prompts = prompts_data.get('introduction_prompts', [])
+        PROMPTS_TYPE = prompts_data.get('introduction_prompts', [])
 except FileNotFoundError:
-    introduction_prompts = []
+    PROMPTS_TYPE = []
     app.logger.warning('prompts.json file not found')
 except json.JSONDecodeError:
-    introduction_prompts = []
+    PROMPTS_TYPE = []
     app.logger.error('Error parsing prompts.json')
     
 
@@ -55,235 +79,35 @@ def index():
     resp = make_response(render_template('index.html'))
     return resp
 
+
 @app.route('/game')
+@auth.login_required
 def game():
 
-    resp = make_response(render_template('game.html', introduction_prompts=introduction_prompts))
-    resp.set_cookie('quiz_api_providers', QUIZ_API_PROVIDERS)
-    resp.set_cookie('ai_api_providers', AI_API_PROVIDERS)
+    resp = make_response(render_template('game.html', prompt_type=PROMPTS_TYPE))
+    #resp.set_cookie('quiz_api_providers', QUIZ_API_PROVIDERS)
+    #resp.set_cookie('ai_api_providers', AI_API_PROVIDERS)
     resp.set_cookie('quiz_categories', QUIZ_CATEGORIES)
     resp.set_cookie('quiz_data', QUIZ_DATA)
     resp.set_cookie('question_description', QUESTION_DESCRIPTION)
     return resp
 
-@app.route('/api/get-questions', methods=['GET'])
-def get_questions():
-    amount = request.args.get('amount', 1)
-    category = request.args.get('category', '')
-    difficulty = request.args.get('difficulty', '')
-    question_type = request.args.get('type', '')
+   
 
-    base_url = TRIVIA_API_URL
-    params = {'amount': amount}
-    if category:
-        params['category'] = category
-    if difficulty:
-        params['difficulty'] = difficulty
-    if question_type:
-        params['type'] = question_type
 
-    try:
-        response = requests.get(base_url, params=params)
-        response.raise_for_status()
-        return jsonify(response.json())
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+@app.route('/api/get-stats', methods=['GET'])
+def get_stats():
+    """
+    Pobiera statystyki zespołu z Firestore
+    """
+    team_name = request.args.get('team_name', session.get('team_name', 'default_team'))
     
-@app.route('/api/generate-description', methods=['GET'])
-def generate_description():
-    # Pobierz parametry z żądania
-    category = request.args.get('category', '')
-    temperature = request.args.get('temperature', '0.5')
-    print(f"Temperature received: {temperature}")
-    question = request.args.get('question', '')
-    correct_answer = request.args.get('correct_answer', '')
-    incorrect_answers = request.args.get('incorrect_answers', '')
-    introduction_prompt_type = request.args.get('introduction_prompt_type', '')
-
-    if introduction_prompt_type:
-        for prompt in introduction_prompts:
-            if prompt['id'] == introduction_prompt_type:
-                # Wydobądź wartości 'text' z zagnieżdżonych obiektów
-                system_instruction = prompt['modality']['systemInstruction']  # Usuń [0] - to nie jest tablica
-                systemInstruction_parts = []
-                
-                # Iteruj przez klucze w systemInstruction (role, descriptionTask, etc.)
-                for key, value in system_instruction.items():
-                    if isinstance(value, dict) and 'text' in value:
-                        systemInstruction_parts.append({"text": value['text']})
-                
-                print(f"System instruction parts for prompt type {introduction_prompt_type}: {systemInstruction_parts}")
-                
-                # Wydobądź description z generationConfig
-                introduction_prompt_type_description = prompt['modality']['generationConfig']['introduction']['description']
-                print(f"Using introduction prompt type id {introduction_prompt_type}")
-                break
-        else:
-            # Jeśli nie znaleziono promptu, użyj domyślnych wartości
-            systemInstruction_parts = [
-                {"text": "Jesteś ekspertem ds. edukacji i tworzenia treści kontekstowych."},
-                {"text": "Twoim zadaniem jest wygenerowanie 5-zdaniowego wprowadzenia do zadanego tematu pytania."},
-                {"text": "oraz 5-zdaniowego podsumowania rozwijającego kontekst prawidłowej odpowiedzi."},
-                {"text": "Dodatkowo, wygeneruj listę najciekawszych terminów, które znajdują się w treści wprowadzenia i podsumowania, dla których użytkownik może chcieć pogłębić wiedzę."},
-                {"text": "Odpowiedzi muszą być precyzyjne, edukacyjne i generowane **tylko w języku polskim**."}
-            ]
-            introduction_prompt_type_description = "Pięciozdaniowe wprowadzenie do tematu pytania, nakreślające kontekst i znaczenie zagadnienia."
-    else:
-        # Domyślne wartości gdy nie wybrano typu promptu
-        systemInstruction_parts = [
-            {"text": "Jesteś ekspertem ds. edukacji i tworzenia treści kontekstowych."},
-            {"text": "Twoim zadaniem jest wygenerowanie 5-zdaniowego wprowadzenia do zadanego tematu pytania."},
-            {"text": "oraz 5-zdaniowego podsumowania rozwijającego kontekst prawidłowej odpowiedzi."},
-            {"text": "Dodatkowo, wygeneruj listę najciekawszych terminów, które znajdują się w treści wprowadzenia i podsumowania, dla których użytkownik może chcieć pogłębić wiedzę."},
-            {"text": "Odpowiedzi muszą być precyzyjne, edukacyjne i generowane **tylko w języku polskim**."}
-        ]
-        introduction_prompt_type_description = "Pięciozdaniowe wprowadzenie do tematu pytania, nakreślające kontekst i znaczenie zagadnienia."
-
-
-    # Sprawdź czy klucz API jest ustawiony
-    if not GEMINI_API_KEY or not GEMINI_API_URL:
-        app.logger.error('GEMINI_API_KEY or GEMINI_API_URL not set')
-        return jsonify({'error': 'API configuration missing'}), 500
-
-    # Przygotuj prompt dla Gemini
-    user_prompt = f"Wygeneruj treści na podstawie poniższych danych. Kategoria: '{category}'. Pytanie: '{question}'. Prawidłowa odpowiedź: '{correct_answer}'. Błędne odpowiedzi: '{incorrect_answers}'"
-
-    # Przygotuj request body dla Gemini API
-    gemini_request = {
-        "contents": [
-            {
-                "role": "user",
-                "parts": [
-                    {
-                        "text": user_prompt
-                    }
-                ]
-            }
-        ],
-        "systemInstruction": {
-            "parts": systemInstruction_parts
-        },
-        "generationConfig": {
-            "temperature":  float(temperature),
-            "responseMimeType": "application/json",
-            "responseSchema": {
-                "type": "object",
-                "properties": {
-                    "wprowadzenie": {
-                        "type": "string",
-                        "description": introduction_prompt_type_description
-                    },
-                    "podsumowanie": {
-                        "type": "string",
-                        "description": "Pięciozdaniowe rozszerzenie informacyjne na temat prawidłowej odpowiedzi, wyjaśniające jej znaczenie i kontekst."
-                    },
-                    "słowa_kluczowe": {
-                        "type": "array",
-                        "description": "Lista kluczowych terminów, nazw własnych, definicji lub dat z tekstu wprowadzenia i podsumowania, które mogą być interesujące i moga wymagać pogłębienia wiedzy. Wygenerowane wartości muszą mieć ten sam zapis jak w wprowadzeniu i podsumowaniu.",
-                        "items": {
-                            "type": "string"
-                        }
-                    }
-                },
-                "required": ["wprowadzenie", "podsumowanie", "słowa_kluczowe"]
-            }
-        }
-    }
-
-    try:
-        # Wyślij żądanie do Gemini API
-        headers = {
-            'Content-Type': 'application/json'
-        }
-        url = f"{GEMINI_API_URL}?key={GEMINI_API_KEY}"
-        response = requests.post(url, headers=headers, json=gemini_request)
-        response.raise_for_status()
-        gemini_response = response.json()
-
-        # Zapisz pełną odpowiedź do pliku
-        with open('static/data/api_response.json', 'w', encoding='utf-8') as f:
-            json.dump(gemini_response, f, ensure_ascii=False, indent=2)
-
-        # Wydobądź wprowadzenie i podsumowanie
-        if 'candidates' in gemini_response and len(gemini_response['candidates']) > 0:
-            content = gemini_response['candidates'][0]['content']['parts'][0]['text']
-            # Parse JSON z text field
-            parsed_content = json.loads(content)
-            
-            return jsonify({
-                'wprowadzenie': parsed_content.get('wprowadzenie', ''),
-                'podsumowanie': parsed_content.get('podsumowanie', ''),
-                'slowa_kluczowe': parsed_content.get('słowa_kluczowe', [])
-            }), 200
-        else:
-            return jsonify({'error': 'No valid response from Gemini API'}), 500
-
-    except requests.exceptions.RequestException as e:
-        return jsonify({'error': f'Request error: {str(e)}'}), 500
-    except json.JSONDecodeError as e:
-        return jsonify({'error': f'JSON parsing error: {str(e)}'}), 500
-    except Exception as e:
-        return jsonify({'error': f'Unexpected error: {str(e)}'}), 500
-
-
-@app.route('/api/get-keyword-definition', methods=['GET'])
-def get_keyword_definition():
-    try:
-        keyword = request.args.get('keyword', '')
-        temperature = float(request.args.get('temperature', 0.5))
-        question = request.args.get('question', '')
-        
-        if not keyword:
-            return jsonify({'error': 'Keyword parameter is required'}), 400
-
-        # Zmodyfikowany prompt z kontekstem pytania
-        if question:
-            user_prompt = f"Wyjaśnij w 3-4 zdaniach co oznacza termin: '{keyword}'. Odpowiedź powinna być zwięzła, merytoryczna i edukacyjna. Pamiętaj, że wyjaśnienie jest w kontekście pytania: '{question}', ale NIE MOŻESZ zdradzić odpowiedzi na to pytanie."
-        else:
-            user_prompt = f"Wyjaśnij w 3-4 zdaniach co oznacza termin: '{keyword}'. Odpowiedź powinna być zwięzła, merytoryczna i edukacyjna."
-
-        gemini_request = {
-            "contents": [
-                {
-                    "role": "user",
-                    "parts": [{"text": user_prompt}]
-                }
-            ],
-            "systemInstruction": {
-                "parts": [
-                    {
-                        "text": "Jesteś ekspertem edukacyjnym. Twoim zadaniem jest wyjaśnianie pojęć w usystematyzowany sposób podając definicje, rozwijając je oraz przywołując przykłady. "
-                               "Odpowiedzi generuj **tylko w języku polskim**. "
-                               "WAŻNE: Jeśli wyjaśnienie jest w kontekście pytania quizowego, NIE MOŻESZ w żaden sposób sugerować ani zdradzać prawidłowej odpowiedzi. "
-                               "Skup się na ogólnym wyjaśnieniu terminu bez wskazywania konkretnych odpowiedzi."
-                    }
-                ]
-            },
-            "generationConfig": {
-                "temperature": temperature,
-                "responseMimeType": "text/plain"
-            }
-        }
-
-        headers = {'Content-Type': 'application/json'}
-        url = f"{GEMINI_API_URL}?key={GEMINI_API_KEY}"
-        
-        response = requests.post(url, headers=headers, json=gemini_request, timeout=30)
-        response.raise_for_status()
-        gemini_response = response.json()
-
-        if 'candidates' in gemini_response and len(gemini_response['candidates']) > 0:
-            definition = gemini_response['candidates'][0]['content']['parts'][0]['text']
-            
-            return jsonify({'definition': definition}), 200
-        else:
-            return jsonify({'error': 'No valid response from Gemini API'}), 500
-
-    except Exception as e:
-        app.logger.error(f'Error getting keyword definition: {str(e)}', exc_info=True)
-        return jsonify({'error': f'Unexpected error: {str(e)}'}), 500
-
-
+    stats = get_team_stats(team_name)
+    
+    if stats is None:
+        return jsonify({'error': 'Failed to get stats'}), 500
+    
+    return jsonify(stats), 200
 
 if __name__ == '__main__':
     app.run(debug=True)
