@@ -484,7 +484,7 @@ def authenticate_team(team_name, password):
         collection_name = get_teams_collection()
         team_ref = db.collection(collection_name).document(team_name)
         team_doc = team_ref.get()
-        if team_name == "guest" and password == "guestpassword":
+        if team_name == "guest":
             if_exists = team_exists(team_name)
             if not if_exists:
                 create_team("guest", "guestpassword")
