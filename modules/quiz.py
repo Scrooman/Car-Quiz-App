@@ -123,3 +123,28 @@ def team_answer_stats_update():
         
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
+    
+
+# W modules/quiz.py lub modules/auth.py
+
+@bp.route('/team/stats', methods=['GET'])
+@auth.login_required
+def get_team_stats_endpoint():
+    """
+    Endpoint do pobierania aktualnych statystyk zespołu
+    """
+    try:
+        team_name = session.get('team_name')
+        
+        if not team_name:
+            return jsonify({'success': False, 'error': 'No team in session'}), 401
+        
+        team_stats = get_team_stats(team_name)
+        
+        if team_stats:
+            return jsonify({'status': True, 'message': 'Team stats updated successfully', 'result': team_stats}), 200
+        else:
+            return jsonify({'success': False, 'error': 'Team not found'}), 404
+            
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500

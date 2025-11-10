@@ -24,7 +24,7 @@ function addDelayedClick(element, callback, delay = 200) {
     });
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
 
     // Display the selected values on the game page
     const quizAPIContainer = document.getElementById('selected-quiz-api');
@@ -41,29 +41,13 @@ document.addEventListener('DOMContentLoaded', () => {
     quizAPIContainer.textContent = selectedQuizApi ? `${selectedQuizApi}` : 'No Quiz API selected.';
     aiAPIContainer.textContent = selectedAiApi ? `${selectedAiApi}` : 'No AI API selected.';
 
-    // wyświetl dane w user-info-tab
-    const teamNameDisplay = document.getElementById('team-name-display');
-    if (teamNameDisplay) {
-        const teamNameLabel = document.createElement('p');
-        teamNameLabel.style.fontWeight = '400';
-        teamNameDisplay.appendChild(teamNameLabel);
-        correctedName = currentTeamName === 'guest' ? 'Guest' : currentTeamName;
-        teamNameLabel.textContent = `${correctedName ? correctedName : 'Guest'}`;
-    }
-    const teamScoreDisplay = document.getElementById('team-score-display');
-    if (teamScoreDisplay) {
-        const teamScoreLabel = document.createElement('p');
-        teamScoreLabel.style.fontWeight = '400';
-        teamScoreDisplay.appendChild(teamScoreLabel);
-        teamScoreLabel.textContent = `${teamStats ? teamStats.total_points : 0} pts`;
-    }
-    const teamAnsweredQuestionsDisplay = document.getElementById('team-answered-questions-display');
-    if (teamAnsweredQuestionsDisplay) {
-        const teamAnsweredQuestionsLabel = document.createElement('p');
-        teamAnsweredQuestionsLabel.style.fontWeight = '400';
-        teamAnsweredQuestionsDisplay.appendChild(teamAnsweredQuestionsLabel);
-        teamAnsweredQuestionsLabel.textContent = `${teamStats ? teamStats.questions_answered : 0}`;
-    }
+
+
+    // ✅ Pobierz świeże dane z backendu przy ładowaniu strony
+    await refreshTeamStats();
+    
+    // Wyświetl dane w user-info-tab
+    displayUserInfo();
 
     // Ładuj kategorie asynchronicznie
     if (quizCategoriesCookie === "local_quiz_categories") {
@@ -381,6 +365,61 @@ document.addEventListener('DOMContentLoaded', () => {
     window.loadAndDisplayQuestion = loadAndDisplayQuestion;
 });
 
+// ✅ Funkcja do pobierania świeżych statystyk z backendu
+async function refreshTeamStats() {
+    try {
+        const response = await fetch('/api/team/stats', {
+            method: 'GET',
+            credentials: 'same-origin'
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            
+            if (data.success && data.result && data.result.stats) {
+                // Zaktualizuj localStorage
+                localStorage.setItem('teamStats', JSON.stringify(data.result.stats));
+                teamStats = data.result.stats;
+                console.log('Team stats refreshed from backend:', teamStats);
+            }
+        }
+    } catch (error) {
+        console.error('Error refreshing team stats:', error);
+        // Użyj danych z localStorage jeśli backend nie odpowiada
+        teamStats = localStorage.getItem('teamStats') 
+            ? JSON.parse(localStorage.getItem('teamStats')) 
+            : null;
+    }
+}
+
+// ✅ Funkcja do wyświetlania informacji użytkownika
+function displayUserInfo() {
+    const teamNameDisplay = document.getElementById('team-name-display');
+    if (teamNameDisplay) {
+        const teamNameLabel = document.createElement('p');
+        teamNameLabel.style.fontWeight = '400';
+        teamNameDisplay.appendChild(teamNameLabel);
+        correctedName = currentTeamName === 'guest' ? 'Guest' : currentTeamName;
+        teamNameLabel.textContent = `${correctedName ? correctedName : 'Guest'}`;
+    }
+    const teamScoreDisplay = document.getElementById('team-score-display');
+    if (teamScoreDisplay) {
+        const teamScoreLabel = document.createElement('p');
+        teamScoreLabel.id = 'team-score-label';
+        teamScoreLabel.style.fontWeight = '400';
+        teamScoreDisplay.appendChild(teamScoreLabel);
+        teamScoreLabel.textContent = `${teamStats ? teamStats.total_points : 0} pts`;
+    }
+    const teamAnsweredQuestionsDisplay = document.getElementById('team-answered-questions-display');
+    if (teamAnsweredQuestionsDisplay) {
+        const teamAnsweredQuestionsLabel = document.createElement('p');
+        teamAnsweredQuestionsLabel.id = 'team-answered-questions-label';
+        teamAnsweredQuestionsLabel.style.fontWeight = '400';
+        teamAnsweredQuestionsDisplay.appendChild(teamAnsweredQuestionsLabel);
+        teamAnsweredQuestionsLabel.textContent = `${teamStats ? teamStats.questions_answered : 0}`;
+    }
+}
+
 function displayQuestion(question, category, quizDataCookie) {
     // Remove previous question if exists
     const existingContainer = document.getElementById('question-container');
@@ -655,7 +694,14 @@ function updateTeamsAnswerStats(answerData) {
     .then(data => {
         if (data.status) {
             console.log('Team stats updated successfully:', data);
-            // Zaktualizuj wyświetlanie wyniku zespołu
+            // ✅ Zaktualizuj localStorage z nowymi statystykami
+            if (data.result.stats) {
+                localStorage.setItem('teamStats', JSON.stringify(data.result.stats));
+                teamStats = data.result.stats;
+            }
+            
+            // ✅ Zaktualizuj wyświetlanie w interfejsie
+            updateTeamStatsDisplay(data.result.stats);
 
         } else {
             console.error('Error updating team stats:', data.error);
@@ -664,6 +710,33 @@ function updateTeamsAnswerStats(answerData) {
     .catch(error => {
         console.error('Error updating team stats:', error);
     });
+}
+
+// ✅ Poprawiona funkcja do aktualizacji wyświetlania statystyk
+function updateTeamStatsDisplay(stats) {
+    // Aktualizuj punkty - znajdź istniejący element <p> i zmień tylko jego textContent
+    const teamScoreDisplay = document.getElementById('team-score-display');
+    if (teamScoreDisplay && stats) {
+        const teamScoreLabel = teamScoreDisplay.querySelector('#team-score-label');
+        if (teamScoreLabel) {
+            teamScoreLabel.textContent = `${stats.total_points || 0} pts`;
+            // Dodaj animację przy aktualizacji
+            teamScoreLabel.classList.add('updated');
+            setTimeout(() => teamScoreLabel.classList.remove('updated'), 500);
+        }
+    }
+    
+    // Aktualizuj liczbę odpowiedzianych pytań - znajdź istniejący element <p> i zmień tylko jego textContent
+    const teamAnsweredQuestionsDisplay = document.getElementById('team-answered-questions-display');
+    if (teamAnsweredQuestionsDisplay && stats) {
+        const teamAnsweredQuestionsLabel = teamAnsweredQuestionsDisplay.querySelector('#team-answered-questions-label');
+        if (teamAnsweredQuestionsLabel) {
+            teamAnsweredQuestionsLabel.textContent = `${stats.questions_answered || 0}`;
+            // Dodaj animację przy aktualizacji
+            teamAnsweredQuestionsLabel.classList.add('updated');
+            setTimeout(() => teamAnsweredQuestionsLabel.classList.remove('updated'), 500);
+        }
+    }
 }
 
 function checkAnswer(question, category, quizDataCookie) {

@@ -4,7 +4,7 @@
       "content": {
         "parts": [
           {
-            "text": "{\n  \"wprowadzenie\": \"Każdy kraj na świecie posiada swoją unikalną nazwę, która często ma głębokie korzenie historyczne i kulturowe. Wiele narodów używa innej nazwy dla swojego państwa w języku ojczystym niż ta, która jest powszechnie znana na arenie międzynarodowej. Znajomość rodzimej nazwy kraju jest kluczowa dla zrozumienia jego tożsamości i szacunku dla jego kultury. Pytanie o polską nazwę Polski dotyka tego właśnie aspektu, podkreślając znaczenie języka w kształtowaniu narodowej świadomości. Jest to podstawowa wiedza geograficzna i kulturowa, która pozwala lepiej orientować się w świecie.\",\n  \"podsumowanie\": \"Prawidłową odpowiedzią na pytanie o nazwę Polski w języku polskim jest 'Polska'. Ta nazwa jest oficjalnym i jedynym poprawnym określeniem naszego kraju używanym przez Polaków. Etymologicznie, słowo 'Polska' wywodzi się prawdopodobnie od nazwy plemienia Polan, które zamieszkiwało dorzecze Warty, a ich nazwa z kolei mogła pochodzić od słowa 'pole'. Używanie tej nazwy jest wyrazem narodowej tożsamości i dumy, odzwierciedlającym bogatą historię i kulturę. Wszelkie inne formy, takie jak 'Pupcia', 'Polszka' czy 'Póland', są niepoprawne i nie mają żadnego uzasadnienia w języku polskim.\",\n  \"słowa_kluczowe\": [\n    \"nazwa\",\n    \"kraj\",\n    \"język ojczysty\",\n    \"tożsamość\",\n    \"kultura\",\n    \"Polska\",\n    \"narodowa świadomość\",\n    \"wiedza geograficzna\",\n    \"Etymologicznie\",\n    \"plemienia Polan\",\n    \"dorzecze Warty\",\n    \"pole\"\n  ]\n}"
+            "text": "{\n  \"wprowadzenie\": \"Oddychanie komórkowe to fundamentalny proces metaboliczny, w którym komórki przekształcają składniki odżywcze w energię w postaci adenozynotrifosforanu (ATP). Jest to złożony ciąg reakcji biochemicznych, który można podzielić na kilka głównych etapów. Głównym celem tego procesu jest efektywne wytwarzanie ATP, cząsteczki będącej uniwersalnym nośnikiem energii w organizmach żywych. Bez ciągłego dostarczania ATP, komórki nie byłyby w stanie przeprowadzać podstawowych funkcji życiowych, takich jak synteza białek, transport substancji czy ruch. Zrozumienie poszczególnych etapów oddychania komórkowego jest kluczowe do pojęcia, jak energia jest pozyskiwana i wykorzystywana przez organizmy.\",\n  \"podsumowanie\": \"Fosforylacja oksydacyjna jest kluczowym etapem oddychania komórkowego, który odpowiada za wytworzenie zdecydowanej większości ATP. Proces ten zachodzi na wewnętrznej błonie mitochondrialnej i składa się z dwóch głównych faz: łańcucha transportu elektronów oraz chemiosmozy. W łańcuchu transportu elektronów, elektrony pochodzące z utleniania glukozy są przekazywane przez szereg białek, co prowadzi do pompowania protonów do przestrzeni międzybłonowej. Nagromadzony gradient protonowy jest następnie wykorzystywany przez syntazę ATP do syntezy ATP z ADP i nieorganicznego fosforanu, co jest procesem niezwykle wydajnym. Tlen pełni rolę końcowego akceptora elektronów w łańcuchu, co jest niezbędne dla prawidłowego przebiegu fosforylacji oksydacyjnej.\",\n  \"słowa_kluczowe\": [\n    \"Oddychanie komórkowe\",\n    \"metaboliczny\",\n    \"adenozynotrifosforanu (ATP)\",\n    \"nośnikiem energii\",\n    \"Fosforylacja oksydacyjna\",\n    \"wewnętrznej błonie mitochondrialnej\",\n    \"łańcucha transportu elektronów\",\n    \"chemiosmozy\",\n    \"gradient protonowy\",\n    \"syntazę ATP\",\n    \"Tlen\",\n    \"akceptora elektronów\"\n  ]\n}"
           }
         ],
         "role": "model"
@@ -15,16 +15,16 @@
   ],
   "usageMetadata": {
     "promptTokenCount": 196,
-    "candidatesTokenCount": 461,
-    "totalTokenCount": 1925,
+    "candidatesTokenCount": 539,
+    "totalTokenCount": 1653,
     "promptTokensDetails": [
       {
         "modality": "TEXT",
         "tokenCount": 196
       }
     ],
-    "thoughtsTokenCount": 1268
+    "thoughtsTokenCount": 918
   },
   "modelVersion": "gemini-2.5-flash",
-  "responseId": "DKMRaZXvIerVxN8Pgvn04Qs"
+  "responseId": "xbcRaf3WDfPWxs0P-eP-6A4"
 }

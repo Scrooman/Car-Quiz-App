@@ -660,3 +660,21 @@ input[type="range"]::-moz-range-thumb {
     border-radius: 12px;
     border: 2px dotted var(--border-color);
 }
+
+/* W pliku static/css/style.css */
+#team-score-display p.updated,
+#team-answered-questions-display p.updated {
+    animation: pulse 0.5s ease-in-out;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+        color: inherit;
+    }
+    50% {
+        transform: scale(1.1);
+        color: #4CAF50;
+        font-weight: bold;
+    }
+}

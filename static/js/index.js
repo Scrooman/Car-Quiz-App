@@ -422,9 +422,10 @@ document.addEventListener('DOMContentLoaded', () => {
             ${type === 'info' ? 'background-color: #3498db; color: white;' : ''}
         `;
 
-        const authInnerContainer = document.getElementById('auth-inner-container');
-        if (authInnerContainer) {
-            authInnerContainer.insertBefore(messageDiv, authInnerContainer.firstChild);
+        const container = document.getElementById('main-container');
+        const startButton = document.getElementById('start-button');
+        if (container) {
+            container.insertBefore(messageDiv, startButton.previousSibling);
 
             // Usuń wiadomość po 5 sekundach
             setTimeout(() => {
